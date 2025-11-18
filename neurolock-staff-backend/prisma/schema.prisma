@@ -1,0 +1,63 @@
+model User {
+    id              String   @id @default(uuid())
+    email           String   @unique
+    password_hash   String
+    name            String
+    role            String   @check("role IN ('psychiatrist', 'therapist', 'nurse', 'admin')")
+    status          String   @check("status IN ('active', 'locked')")
+    last_login_at   DateTime?
+    created_at      DateTime @default(now())
+    updated_at      DateTime @updatedAt
+    deleted_at      DateTime?
+}
+
+model Patient {
+    id          String   @id @default(uuid())
+    mrn         String   @unique
+    name        String
+    dob         DateTime
+    gender      String?
+    phone       String?
+    address     String?
+    created_at  DateTime @default(now())
+    updated_at  DateTime @updatedAt
+    deleted_at  DateTime?
+}
+
+model TherapyNote {
+    id          String   @id @default(uuid())
+    patient_id  String   @relation(fields: [patient_id], references: [id])
+    author_id   String   @relation(fields: [author_id], references: [id])
+    title       String?
+    body        String?
+    created_at  DateTime @default(now())
+    updated_at  DateTime @updatedAt
+    deleted_at  DateTime?
+}
+
+model MedicationRecord {
+    id              String   @id @default(uuid())
+    patient_id      String   @relation(fields: [patient_id], references: [id])
+    drug_name       String?
+    dose            String?
+    route           String?
+    frequency       String?
+    start_on        DateTime?
+    end_on          DateTime?
+    prescribed_by    String   @relation(fields: [prescribed_by], references: [id])
+    created_at      DateTime @default(now())
+    updated_at      DateTime @updatedAt
+    deleted_at      DateTime?
+}
+
+model Appointment {
+    id          String   @id @default(uuid())
+    patient_id  String   @relation(fields: [patient_id], references: [id])
+    staff_id    String   @relation(fields: [staff_id], references: [id])
+    scheduled_for DateTime
+    status      String   @check("status IN ('scheduled', 'completed', 'cancelled')")
+    notes       String?
+    created_at  DateTime @default(now())
+    updated_at  DateTime @updatedAt
+    deleted_at  DateTime?
+}
