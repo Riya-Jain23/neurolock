@@ -114,11 +114,11 @@ export function PsychologistDashboardNew({ navigation, route }: PsychologistDash
 
     try {
       const newPatient = await patientAPI.create({
-        name: newPatientName,
-        date_of_birth: newPatientDOB,
-        gender: newPatientGender,
-        contact_number: newPatientContact,
-        diagnosis: newPatientDiagnosis,
+        mrn: `MRN${Date.now()}`,
+        full_name: newPatientName,
+        dob: newPatientDOB,
+        phone: newPatientContact,
+        email: '',
       });
 
       setPatients([
