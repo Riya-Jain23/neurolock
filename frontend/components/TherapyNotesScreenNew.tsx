@@ -279,7 +279,7 @@ export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenN
             </TouchableOpacity>
           </View>
 
-          {previousNotes.map((note) => (
+          {notes.map((note) => (
             <TouchableOpacity
               key={note.id}
               onPress={() =>

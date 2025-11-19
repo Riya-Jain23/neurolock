@@ -246,14 +246,24 @@ export function PsychologistDashboardNew({ navigation, route }: PsychologistDash
               <Text style={styles.headerIcon}>🧠</Text>
               <Text style={styles.headerTitle}>Psychologist Dashboard</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('WelcomeNew')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.logoutIcon}>🚪</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsNew')}
+                activeOpacity={0.7}
+                style={styles.headerButton}
+              >
+                <Text style={styles.headerButtonIcon}>⚙️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('WelcomeNew')}
+                activeOpacity={0.7}
+                style={styles.headerButton}
+              >
+                <Text style={styles.logoutIcon}>🚪</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.headerSubtitle}>Dr. {staffId}</Text>
+          <Text style={styles.headerSubtitle}>{staffId}</Text>
         </View>
 
         {/* Access Restrictions Notice */}
@@ -678,6 +688,17 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerButton: {
+    padding: 8,
+  },
+  headerButtonIcon: {
+    fontSize: 20,
   },
   headerIcon: {
     fontSize: 20,

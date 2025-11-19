@@ -229,6 +229,14 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
                     thumbColor={biometricEnabled ? '#ffffff' : '#f3f4f6'}
                   />
                 </View>
+
+                <Button
+                  onPress={() => navigation.navigate('BackupCodesNew', { staffId })}
+                  variant="outline"
+                  style={styles.backupCodesButton}
+                >
+                  <Text style={styles.backupCodesButtonText}>View Backup Codes</Text>
+                </Button>
               </CardContent>
             </Card>
 
@@ -321,9 +329,12 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
           <TabsContent value="devices">
             <View style={styles.devicesHeader}>
               <Text style={styles.devicesTitle}>Connected Devices</Text>
-              <TouchableOpacity style={styles.addDeviceButton} activeOpacity={0.7}>
+              <Button
+                onPress={() => navigation.navigate('DeviceRegistrationNew')}
+                style={styles.addDeviceButton}
+              >
                 <Text style={styles.addDeviceButtonText}>Add Device</Text>
-              </TouchableOpacity>
+              </Button>
             </View>
 
             <View style={styles.devicesList}>
@@ -831,6 +842,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   saveButtonText: {
+    fontSize: 14,
+    color: '#ffffff',
+  },
+  backupCodesButton: {
+    marginTop: 16,
+    width: '100%',
+  },
+  backupCodesButtonText: {
     fontSize: 14,
     color: '#ffffff',
   },

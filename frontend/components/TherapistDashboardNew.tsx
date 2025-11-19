@@ -6,6 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Modal,
+  TextInput,
+  Alert as RNAlert,
 } from 'react-native';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card.native';
 import { Badge } from './ui/badge.native';
@@ -40,8 +43,7 @@ interface SessionLog {
 export function TherapistDashboardNew({ navigation, route }: TherapistDashboardNewProps) {
   const { staffId } = route.params || { staffId: 'STAFF-003' };
   const [searchTerm, setSearchTerm] = useState('');
-
-  const clients: Client[] = [
+  const [clients, setClients] = useState<Client[]>([
     {
       id: 'C001',
       name: 'Client A',
@@ -66,7 +68,11 @@ export function TherapistDashboardNew({ navigation, route }: TherapistDashboardN
       progress: 85,
       nextSession: '2024-10-07',
     },
-  ];
+  ]);
+
+  const [updateProgressModalVisible, setUpdateProgressModalVisible] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState('');
+  const [progressValue, setProgressValue] = useState('');
 
   const sessionLogs: SessionLog[] = [
     {
@@ -112,6 +118,35 @@ export function TherapistDashboardNew({ navigation, route }: TherapistDashboardN
     return 'outline';
   };
 
+  const handleUpdateProgress = () => {
+    if (!selectedClientId || !progressValue) {
+      RNAlert.alert('Validation Error', 'Please select a client and enter progress value');
+      return;
+    }
+
+    const progressNum = parseInt(progressValue, 10);
+    if (isNaN(progressNum) || progressNum < 0 || progressNum > 100) {
+      RNAlert.alert('Validation Error', 'Progress must be between 0 and 100');
+      return;
+    }
+
+    try {
+      const updatedClients = clients.map((client) =>
+        client.id === selectedClientId
+          ? { ...client, progress: progressNum }
+          : client
+      );
+      setClients(updatedClients);
+      setUpdateProgressModalVisible(false);
+      setSelectedClientId('');
+      setProgressValue('');
+      RNAlert.alert('Success', 'Client progress updated successfully');
+    } catch (error) {
+      console.error('Failed to update progress:', error);
+      RNAlert.alert('Error', 'Failed to update progress');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -119,15 +154,25 @@ export function TherapistDashboardNew({ navigation, route }: TherapistDashboardN
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
-              <Text style={styles.headerIcon}>🧑‍⚕️</Text>
+              <Text style={styles.headerIcon}>💬</Text>
               <Text style={styles.headerTitle}>Therapist Dashboard</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('WelcomeNew')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.logoutIcon}>🚪</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsNew')}
+                activeOpacity={0.7}
+                style={styles.headerButton}
+              >
+                <Text style={styles.headerButtonIcon}>⚙️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('WelcomeNew')}
+                activeOpacity={0.7}
+                style={styles.headerButton}
+              >
+                <Text style={styles.logoutIcon}>🚪</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Text style={styles.headerSubtitle}>{staffId}</Text>
         </View>
@@ -260,6 +305,13 @@ export function TherapistDashboardNew({ navigation, route }: TherapistDashboardN
           <TabsContent value="progress">
             <View style={styles.tabHeader}>
               <Text style={styles.tabTitle}>Progress Tracking</Text>
+              <TouchableOpacity
+                style={styles.addButton}
+                activeOpacity={0.7}
+                onPress={() => setUpdateProgressModalVisible(true)}
+              >
+                <Text style={styles.addButtonText}>📈 Update</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Summary Stats */}
@@ -307,6 +359,66 @@ export function TherapistDashboardNew({ navigation, route }: TherapistDashboardN
           </TabsContent>
         </Tabs>
       </ScrollView>
+
+      {/* Update Progress Modal */}
+      <Modal
+        visible={updateProgressModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setUpdateProgressModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Update Client Progress</Text>
+
+            <Text style={styles.modalLabel}>Select Client *</Text>
+            <ScrollView style={styles.clientSelector}>
+              {clients.map((client) => (
+                <TouchableOpacity
+                  key={client.id}
+                  style={[
+                    styles.clientOption,
+                    selectedClientId === client.id && styles.clientOptionSelected,
+                  ]}
+                  onPress={() => setSelectedClientId(client.id)}
+                >
+                  <Text
+                    style={[
+                      styles.clientOptionText,
+                      selectedClientId === client.id && styles.clientOptionTextSelected,
+                    ]}
+                  >
+                    {client.name} (Current: {client.progress}%)
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Progress Value (0-100) *"
+              value={progressValue}
+              onChangeText={setProgressValue}
+              keyboardType="number-pad"
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setUpdateProgressModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleUpdateProgress}
+              >
+                <Text style={styles.saveButtonText}>Update</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -333,6 +445,17 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerButton: {
+    padding: 8,
+  },
+  headerButtonIcon: {
+    fontSize: 20,
   },
   headerIcon: {
     fontSize: 20,
@@ -535,5 +658,92 @@ const styles = StyleSheet.create({
   progressItemSessions: {
     fontSize: 12,
     color: '#6b7280',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 16,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  clientSelector: {
+    maxHeight: 150,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  clientOption: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  clientOptionSelected: {
+    backgroundColor: '#dbeafe',
+  },
+  clientOptionText: {
+    fontSize: 14,
+    color: '#1f2937',
+  },
+  clientOptionTextSelected: {
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 12,
+    backgroundColor: '#ffffff',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f3f4f6',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  saveButton: {
+    backgroundColor: '#3b82f6',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
