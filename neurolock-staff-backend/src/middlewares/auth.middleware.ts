@@ -57,7 +57,10 @@ export const authorize = (...allowedRoles: string[]) => {
             return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
         }
 
-        if (allowedRoles.length && !allowedRoles.includes(req.user.role)) {
+        const userRole = req.user.role.toLowerCase();
+        const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase());
+
+        if (normalizedAllowedRoles.length && !normalizedAllowedRoles.includes(userRole)) {
             return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } });
         }
 

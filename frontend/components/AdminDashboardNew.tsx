@@ -425,7 +425,7 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
               placeholder="Search staff..."
               value={searchTerm}
               onChangeText={setSearchTerm}
-              leftIcon="🔍"
+              leftIcon={<Text>🔍</Text>}
               style={styles.searchInput}
             />
 

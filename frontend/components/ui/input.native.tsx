@@ -40,7 +40,11 @@ export function Input({
           error && styles.inputContainerError,
         )}
       >
-        {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
+        {leftIcon && (
+          <View style={styles.iconLeft}>
+            {typeof leftIcon === 'string' ? <Text>{leftIcon}</Text> : leftIcon}
+          </View>
+        )}
         <TextInput
           style={cn<TextStyle>(styles.input, inputStyle)}
           onFocus={() => setIsFocused(true)}
@@ -48,7 +52,11 @@ export function Input({
           placeholderTextColor="#94a3b8"
           {...props}
         />
-        {rightIcon && <View style={styles.iconRight}>{rightIcon}</View>}
+        {rightIcon && (
+          <View style={styles.iconRight}>
+            {typeof rightIcon === 'string' ? <Text>{rightIcon}</Text> : rightIcon}
+          </View>
+        )}
       </View>
       {error && <Text style={styles.error}>{error}</Text>}
     </View>

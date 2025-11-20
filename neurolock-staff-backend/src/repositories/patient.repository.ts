@@ -52,6 +52,34 @@ export const updatePatient = async (id: number, patient: Partial<Patient>): Prom
         fields.push('email = ?');
         values.push(patient.email);
     }
+    if (patient.status !== undefined) {
+        fields.push('status = ?');
+        values.push(patient.status);
+    }
+    if (patient.gender !== undefined) {
+        fields.push('gender = ?');
+        values.push(patient.gender);
+    }
+    if (patient.diagnosis !== undefined) {
+        fields.push('diagnosis = ?');
+        values.push(patient.diagnosis);
+    }
+    if (patient.ward !== undefined) {
+        fields.push('ward = ?');
+        values.push(patient.ward);
+    }
+    if (patient.room !== undefined) {
+        fields.push('room = ?');
+        values.push(patient.room);
+    }
+    if (patient.attending_physician !== undefined) {
+        fields.push('attending_physician = ?');
+        values.push(patient.attending_physician);
+    }
+    if (patient.assigned_therapist !== undefined) {
+        fields.push('assigned_therapist = ?');
+        values.push(patient.assigned_therapist);
+    }
     
     if (fields.length === 0) return false;
     

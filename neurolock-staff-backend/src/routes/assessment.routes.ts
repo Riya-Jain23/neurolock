@@ -57,7 +57,7 @@ router.post('/', authorize('psychologist', 'psychiatrist', 'admin'), async (req:
         // Accept flexible field names
         const patient_id = req.body.patient_id || req.body.patient_mrn;
         const assessment_type = req.body.assessment_type || req.body.type;
-        const scheduled_by = req.user?.email || 'unknown';
+        const scheduled_by = req.body.scheduled_by || req.user?.email || 'unknown';
         const status = req.body.status || 'scheduled';
         const scheduled_date = req.body.scheduled_date || req.body.date;
         const notes = req.body.notes || req.body.assessment_notes;

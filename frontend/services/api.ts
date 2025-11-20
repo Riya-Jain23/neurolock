@@ -146,6 +146,13 @@ export const patientAPI = {
         dob: string;
         phone: string;
         email: string;
+        status: string;
+        gender: string;
+        diagnosis: string;
+        ward: string;
+        room: string;
+        attending_physician: string;
+        assigned_therapist: string;
     }>) => {
         return await apiRequest<any>(`/patients/${id}`, {
             method: 'PUT',
@@ -171,6 +178,10 @@ export const therapyNoteAPI = {
     },
     
     getById: async (id: number) => {
+        return await apiRequest<any>(`/therapy-notes/${id}`);
+    },
+    
+    getDecrypted: async (id: number) => {
         return await apiRequest<any>(`/therapy-notes/${id}`);
     },
     
@@ -242,6 +253,7 @@ export const assessmentAPI = {
         patient_mrn?: string;
         assessment_type?: string;
         type?: string;
+        scheduled_by?: string;
         status?: string;
         scheduled_date?: string;
         date?: string;

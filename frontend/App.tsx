@@ -31,6 +31,8 @@ import DeviceRegistrationScreenNew from './components/DeviceRegistrationScreenNe
 import OfflineModeScreenNew from './components/OfflineModeScreenNew';
 import ReAuthenticationPromptNew from './components/ReAuthenticationPromptNew';
 import ForgotPasswordScreenNew from './components/ForgotPasswordScreenNew';
+import { TherapyNoteDetailScreen } from './components/TherapyNoteDetailScreen';
+import { AssessmentDetailScreen } from './components/AssessmentDetailScreen';
 import { ToastProvider } from './components/ui';
 import { MultiFactorAuth } from './components/MultiFactorAuth';
 import { SMSVerification } from './components/SMSVerification';
@@ -105,6 +107,8 @@ export default function App() {
               <Stack.Screen name="OfflineModeNew" component={OfflineModeScreenNew} />
               <Stack.Screen name="ReAuthenticationPromptNew" component={ReAuthenticationPromptNew} />
               <Stack.Screen name="ForgotPasswordNew" component={ForgotPasswordScreenNew} />
+              <Stack.Screen name="TherapyNoteDetail" component={TherapyNoteDetailScreen} />
+              <Stack.Screen name="AssessmentDetail" component={AssessmentDetailScreen} />
               </Stack.Navigator>
             </NavigationContainer>
           </ToastProvider>

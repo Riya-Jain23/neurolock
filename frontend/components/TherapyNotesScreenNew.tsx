@@ -8,6 +8,10 @@ import {
   SafeAreaView,
   TextInput as RNTextInput,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card.native';
 import { Badge } from './ui/badge.native';
@@ -15,7 +19,7 @@ import { Alert } from './ui/alert.native';
 import { Separator } from './ui/separator.native';
 import { Button } from './ui/button.native';
 import { useToast } from './ui';
-import { therapyNoteAPI } from '../services/api';
+import { therapyNoteAPI, patientAPI } from '../services/api';
 
 interface TherapyNotesScreenNewProps {
   navigation: any;
@@ -28,55 +32,110 @@ interface TherapyNote {
   author: string;
   created_at: string;
   content?: string;
+  note_content?: string;
+}
+
+interface Patient {
+  id: string;
+  numericId?: number;
+  name: string;
+  mrn?: string;
 }
 
 export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenNewProps) {
-  const { patientId, staffId, role } = route.params || {
-    patientId: 1,
+  const { patientId: routePatientId, staffId, role } = route.params || {
+    patientId: undefined,
     staffId: 'STAFF-001',
     role: 'psychiatrist',
   };
 
+  const [selectedPatientId, setSelectedPatientId] = useState(routePatientId);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [currentNote, setCurrentNote] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [autoLockTimer, setAutoLockTimer] = useState(300);
   const [isLocked, setIsLocked] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [notes, setNotes] = useState<TherapyNote[]>([]);
+  
+  // Session metadata fields
+  const [sessionType, setSessionType] = useState('');
+  const [patientMood, setPatientMood] = useState('');
+  const [progressAssessment, setProgressAssessment] = useState('');
+  
   const { showToast } = useToast();
 
-
   useEffect(() => {
-    loadNotes();
-  }, [patientId]);
+    loadPatients();
+  }, []);
 
-  const loadNotes = async () => {
+  const loadPatients = async () => {
     try {
-      setLoading(true);
-      const response = await therapyNoteAPI.getByPatientId(parseInt(patientId.toString()));
-      setNotes(response.data || []);
-    } catch (error: any) {
-      showToast(error.message || 'Failed to load notes', 'error');
-    } finally {
-      setLoading(false);
+      const response = await patientAPI.getAll();
+      const patientsData = response?.data || response || [];
+      setPatients(
+        (Array.isArray(patientsData) ? patientsData : []).map((p: any) => ({
+          id: p.mrn || p.id,
+          numericId: p.id,
+          name: p.full_name || p.name || 'Unknown Patient',
+          mrn: p.mrn,
+        }))
+      );
+    } catch (error) {
+      console.error('Failed to load patients:', error);
     }
   };
 
   const handleSaveNote = async () => {
+    if (!selectedPatientId) {
+      showToast('Please select a patient', 'warning');
+      return;
+    }
+    
     if (!currentNote.trim()) {
       showToast('Note cannot be empty', 'warning');
       return;
     }
+    
+    if (!sessionType) {
+      showToast('Please select a session type', 'warning');
+      return;
+    }
+
+    const selectedPatient = patients.find(p => p.id === selectedPatientId);
+    const patientIdToSend = selectedPatient?.numericId || parseInt(selectedPatientId.toString()) || selectedPatientId;
 
     try {
       setLoading(true);
-      await therapyNoteAPI.create(parseInt(patientId.toString()), currentNote);
+      
+      // Build note content with metadata
+      const noteWithMetadata = `[Session Type: ${sessionType}]${patientMood ? ` [Mood: ${patientMood}]` : ''}${progressAssessment ? ` [Progress: ${progressAssessment}]` : ''}\n\n${currentNote}`;
+      
+      console.log('Creating note with data:', {
+        patient_id: typeof patientIdToSend === 'number' ? patientIdToSend : undefined,
+        patient_mrn: typeof patientIdToSend === 'string' ? patientIdToSend : undefined,
+        staff_id: staffId,
+        note_content: noteWithMetadata,
+        note_length: noteWithMetadata.length
+      });
+      
+      const result = await therapyNoteAPI.create({
+        patient_id: typeof patientIdToSend === 'number' ? patientIdToSend : undefined,
+        patient_mrn: typeof patientIdToSend === 'string' ? patientIdToSend : undefined,
+        staff_id: staffId,
+        note_content: noteWithMetadata
+      });
+      
+      console.log('Note created successfully:', result);
+      
       showToast('Note saved and encrypted successfully', 'success');
       setCurrentNote('');
+      setSessionType('');
+      setPatientMood('');
+      setProgressAssessment('');
       setIsEditing(false);
       setLastSaved(new Date());
-      await loadNotes();
+      navigation.goBack();
     } catch (error: any) {
       showToast(error.message || 'Failed to save note', 'error');
     } finally {
@@ -113,8 +172,13 @@ export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenN
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -131,13 +195,45 @@ export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenN
           </View>
           <View style={styles.headerBadges}>
             <Badge variant="outline" style={styles.headerBadge}>
-              <Text style={styles.badgeText}>Patient {patientId}</Text>
+              <Text style={styles.badgeText}>
+                {selectedPatientId 
+                  ? `Patient ${patients.find(p => p.id === selectedPatientId)?.name || selectedPatientId}` 
+                  : 'Select Patient'}
+              </Text>
             </Badge>
             <Badge variant="outline" style={styles.headerBadge}>
               <Text style={styles.badgeText}>🔒 Encrypted</Text>
             </Badge>
           </View>
         </View>
+
+        {/* Patient Selector - Show if no patient selected or coming from dashboard */}
+        {!routePatientId && (
+          <View style={styles.patientSelectorSection}>
+            <Text style={styles.fieldLabel}>Select Patient *</Text>
+            <ScrollView style={styles.patientSelectorCompact} horizontal showsHorizontalScrollIndicator={false}>
+              {patients.map((patient) => (
+                <TouchableOpacity
+                  key={patient.id}
+                  style={[
+                    styles.patientChip,
+                    selectedPatientId === patient.id && styles.patientChipSelected,
+                  ]}
+                  onPress={() => setSelectedPatientId(patient.id)}
+                >
+                  <Text
+                    style={[
+                      styles.patientChipText,
+                      selectedPatientId === patient.id && styles.patientChipTextSelected,
+                    ]}
+                  >
+                    {patient.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Security Status */}
         <View style={styles.securityStatus}>
@@ -147,9 +243,9 @@ export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenN
           </View>
           {isEditing && (
             <View style={styles.securityRight}>
-              <Text style={styles.timerIcon}>⏰</Text>
+              <Text style={styles.timerIcon}>💾</Text>
               <Text style={styles.timerText}>
-                Auto-lock: {formatTimeRemaining(autoLockTimer)}
+                Auto-save: {formatTimeRemaining(autoLockTimer)}
               </Text>
             </View>
           )}
@@ -192,14 +288,7 @@ export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenN
                   Start writing a new therapy note for this patient.
                 </Text>
                 <Button
-                  onPress={() =>
-                    navigation.navigate('SecureNoteEditorNew', {
-                      patientId,
-                      staffId,
-                      role,
-                      isNewNote: true,
-                    })
-                  }
+                  onPress={handleStartEditing}
                   style={styles.startEditingButton}
                 >
                   <Text style={styles.startEditingButtonText}>✏️ Start New Note</Text>
@@ -221,10 +310,84 @@ export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenN
               </View>
             ) : (
               <View style={styles.editingContainer}>
+                {/* Session Type Selection */}
+                <Text style={styles.fieldLabel}>Session Type *</Text>
+                <View style={styles.sessionTypeGrid}>
+                  {['Initial Assessment', 'Follow-up', 'Crisis Intervention', 'Group Therapy'].map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.sessionTypeOption,
+                        sessionType === type && styles.sessionTypeSelected,
+                      ]}
+                      onPress={() => setSessionType(type)}
+                    >
+                      <Text
+                        style={[
+                          styles.sessionTypeText,
+                          sessionType === type && styles.sessionTypeTextSelected,
+                        ]}
+                      >
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Patient Mood Selection */}
+                <Text style={styles.fieldLabel}>Patient Mood/State</Text>
+                <View style={styles.moodGrid}>
+                  {['Calm', 'Anxious', 'Depressed', 'Agitated', 'Cooperative'].map((mood) => (
+                    <TouchableOpacity
+                      key={mood}
+                      style={[
+                        styles.moodOption,
+                        patientMood === mood && styles.moodSelected,
+                      ]}
+                      onPress={() => setPatientMood(mood)}
+                    >
+                      <Text
+                        style={[
+                          styles.moodText,
+                          patientMood === mood && styles.moodTextSelected,
+                        ]}
+                      >
+                        {mood}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Progress Assessment Selection */}
+                <Text style={styles.fieldLabel}>Progress Assessment</Text>
+                <View style={styles.progressGrid}>
+                  {['Improved', 'Stable', 'Declined', 'No Change'].map((progress) => (
+                    <TouchableOpacity
+                      key={progress}
+                      style={[
+                        styles.progressOption,
+                        progressAssessment === progress && styles.progressSelected,
+                      ]}
+                      onPress={() => setProgressAssessment(progress)}
+                    >
+                      <Text
+                        style={[
+                          styles.progressText,
+                          progressAssessment === progress && styles.progressTextSelected,
+                        ]}
+                      >
+                        {progress}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Session Notes Text Area */}
+                <Text style={styles.fieldLabel}>Session Notes *</Text>
                 <RNTextInput
                   value={currentNote}
                   onChangeText={setCurrentNote}
-                  placeholder="Enter therapy session notes..."
+                  placeholder="Document session observations, interventions, patient responses, and treatment plan updates..."
                   multiline
                   numberOfLines={8}
                   style={styles.noteInput}
@@ -235,19 +398,34 @@ export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenN
                   <Text style={styles.saveStatusText}>
                     {lastSaved
                       ? `Last saved: ${lastSaved.toLocaleTimeString()}`
-                      : 'Changes will auto-save'}
+                      : 'Note will be encrypted on save'}
                   </Text>
 
                   <View style={styles.editingButtons}>
                     <Button
                       variant="outline"
-                      onPress={() => setIsEditing(false)}
+                      onPress={() => {
+                        setIsEditing(false);
+                        setCurrentNote('');
+                        setSessionType('');
+                        setPatientMood('');
+                        setProgressAssessment('');
+                      }}
                       style={styles.cancelButton}
                     >
                       <Text style={styles.cancelButtonText}>Cancel</Text>
                     </Button>
-                    <Button onPress={handleSave} style={styles.saveButton}>
-                      <Text style={styles.saveButtonText}>💾 Save Note</Text>
+                    <Button 
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        handleSaveNote();
+                      }}
+                      style={styles.saveButton}
+                      disabled={loading}
+                    >
+                      <Text style={styles.saveButtonText}>
+                        {loading ? '💾 Saving...' : '💾 Save Note'}
+                      </Text>
                     </Button>
                   </View>
                 </View>
@@ -255,76 +433,9 @@ export function TherapyNotesScreenNew({ navigation, route }: TherapyNotesScreenN
             )}
           </CardContent>
         </Card>
-
-        <Separator style={styles.separator} />
-
-        {/* Previous Notes */}
-        <View style={styles.previousNotesSection}>
-          <View style={styles.previousNotesHeader}>
-            <Text style={styles.previousNotesTitle}>Previous Notes</Text>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('SecureNoteEditorNew', {
-                  patientId,
-                  staffId,
-                  role,
-                  isNewNote: true,
-                })
-              }
-              activeOpacity={0.7}
-            >
-              <View style={styles.newNoteButton}>
-                <Text style={styles.newNoteButtonText}>📄 New Secure Note</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {previousNotes.map((note) => (
-            <TouchableOpacity
-              key={note.id}
-              onPress={() =>
-                navigation.navigate('SecureNoteEditorNew', {
-                  patientId,
-                  staffId,
-                  role,
-                  noteId: note.id,
-                  isNewNote: false,
-                })
-              }
-              activeOpacity={0.7}
-            >
-              <Card style={styles.noteCard}>
-                <CardHeader style={styles.noteCardHeader}>
-                  <View style={styles.noteCardTitleRow}>
-                    <View>
-                      <CardTitle style={styles.noteCardTitle}>{note.type}</CardTitle>
-                      <Text style={styles.noteCardDate}>
-                        {note.date} at {note.time}
-                      </Text>
-                    </View>
-                    <View style={styles.noteCardBadges}>
-                      <Badge variant="outline" style={styles.noteBadge}>
-                        <Text style={styles.noteBadgeText}>{note.author}</Text>
-                      </Badge>
-                      {note.encrypted && (
-                        <Badge variant="outline" style={styles.noteBadge}>
-                          <Text style={styles.noteBadgeText}>🔒 Encrypted</Text>
-                        </Badge>
-                      )}
-                    </View>
-                  </View>
-                </CardHeader>
-                <CardContent>
-                  <Text style={styles.noteContent}>{note.content}</Text>
-                  <Text style={styles.noteFooter}>
-                    Click to edit (requires re-authentication)
-                  </Text>
-                </CardContent>
-              </Card>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
 
       {/* Footer */}
       <View style={styles.footer}>
@@ -620,5 +731,123 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 11,
     color: '#6b7280',
+  },
+  // Session metadata styles
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  sessionTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  sessionTypeOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#ffffff',
+  },
+  sessionTypeSelected: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  sessionTypeText: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  sessionTypeTextSelected: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  moodGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  moodOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#ffffff',
+  },
+  moodSelected: {
+    backgroundColor: '#8b5cf6',
+    borderColor: '#8b5cf6',
+  },
+  moodText: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  moodTextSelected: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  progressGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  progressOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#ffffff',
+  },
+  progressSelected: {
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  progressTextSelected: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  // Patient selector styles
+  patientSelectorSection: {
+    padding: 16,
+    backgroundColor: '#f9fafb',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  patientSelectorCompact: {
+    maxHeight: 100,
+  },
+  patientChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#ffffff',
+    marginRight: 8,
+  },
+  patientChipSelected: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  patientChipText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  patientChipTextSelected: {
+    color: '#ffffff',
+    fontWeight: '600',
   },
 });

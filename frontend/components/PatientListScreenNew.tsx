@@ -24,6 +24,14 @@ interface Patient {
   phone?: string;
   email?: string;
   created_at?: string;
+  status?: string;
+  gender?: string;
+  diagnosis?: string;
+  ward?: string;
+  room?: string;
+  attending_physician?: string;
+  assigned_therapist?: string;
+  admission_date?: string;
 }
 
 interface PatientListScreenNewProps {
@@ -182,13 +190,13 @@ export function PatientListScreenNew({ navigation, route }: PatientListScreenNew
                 <CardHeader style={styles.patientCardHeader}>
                   <View style={styles.patientHeaderRow}>
                     <View style={styles.patientHeaderLeft}>
-                      <Avatar size="md" fallback={patient.name.split(' ').map((n) => n[0]).join('')} />
+                      <Avatar size="md" fallback={patient.full_name.split(' ').map((n) => n[0]).join('')} />
                       <View style={styles.patientInfo}>
-                        <Text style={styles.patientName}>{patient.name}</Text>
-                        <Text style={styles.patientId}>ID: {patient.id}</Text>
+                        <Text style={styles.patientName}>{patient.full_name}</Text>
+                        <Text style={styles.patientId}>MRN: {patient.mrn}</Text>
                       </View>
                     </View>
-                    <Badge variant={getPriorityBadgeVariant(patient.priority)}>{patient.priority}</Badge>
+                    <Badge variant="outline">{patient.gender || 'N/A'}</Badge>
                   </View>
                 </CardHeader>
                 <CardContent>
@@ -198,12 +206,12 @@ export function PatientListScreenNew({ navigation, route }: PatientListScreenNew
                         <IconButton icon="map-marker" size={14} iconColor="#3b82f6" />
                         <View>
                           <Text style={styles.detailLabel}>Ward</Text>
-                          <Text style={styles.detailValue}>{patient.ward}</Text>
+                          <Text style={styles.detailValue}>{patient.ward || 'N/A'}</Text>
                         </View>
                       </View>
                       <View style={styles.detailItem}>
                         <Text style={styles.detailLabel}>Room</Text>
-                        <Text style={styles.detailValue}>{patient.room}</Text>
+                        <Text style={styles.detailValue}>{patient.room || 'N/A'}</Text>
                       </View>
                     </View>
 
@@ -211,15 +219,15 @@ export function PatientListScreenNew({ navigation, route }: PatientListScreenNew
                       <View style={styles.detailItem}>
                         <IconButton icon="calendar" size={14} iconColor="#10b981" />
                         <View>
-                          <Text style={styles.detailLabel}>Next Appt</Text>
-                          <Text style={styles.detailValue}>{patient.nextAppointment.split(' ')[1]}</Text>
+                          <Text style={styles.detailLabel}>Admitted</Text>
+                          <Text style={styles.detailValue}>{patient.admission_date ? new Date(patient.admission_date).toLocaleDateString() : 'N/A'}</Text>
                         </View>
                       </View>
                       <View style={styles.detailItem}>
-                        <IconButton icon="clock-outline" size={14} iconColor="#64748b" />
+                        <IconButton icon="account-heart" size={14} iconColor="#64748b" />
                         <View>
-                          <Text style={styles.detailLabel}>Last Access</Text>
-                          <Text style={styles.detailValue}>{patient.lastAccessed.split(' ')[1]}</Text>
+                          <Text style={styles.detailLabel}>Therapist</Text>
+                          <Text style={styles.detailValue}>{patient.assigned_therapist?.split(' ')[0] || 'Unassigned'}</Text>
                         </View>
                       </View>
                     </View>
@@ -228,8 +236,8 @@ export function PatientListScreenNew({ navigation, route }: PatientListScreenNew
                   <Separator style={styles.cardSeparator} />
 
                   <View style={styles.patientFooter}>
-                    <Text style={styles.conditionText}>{patient.condition}</Text>
-                    <Badge variant={getStatusBadgeVariant(patient.status)}>{patient.status}</Badge>
+                    <Text style={styles.conditionText}>{patient.diagnosis || 'No diagnosis'}</Text>
+                    <Badge variant={getStatusBadgeVariant(patient.status || 'Active')}>{patient.status || 'Active'}</Badge>
                   </View>
                 </CardContent>
               </Card>

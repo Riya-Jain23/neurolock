@@ -5,6 +5,14 @@ export interface Patient {
     dob?: string | null;
     phone?: string | null;
     email?: string | null;
+    status?: string | null;
+    gender?: string | null;
+    diagnosis?: string | null;
+    ward?: string | null;
+    room?: string | null;
+    attending_physician?: string | null;
+    assigned_therapist?: string | null;
+    admission_date?: string | null;
     created_at?: Date;
 }
 

@@ -100,13 +100,13 @@ router.post('/', authorize('admin', 'psychiatrist', 'nurse', 'psychologist'), as
     }
 });
 
-// Update patient (admin, psychiatrist, nurse)
-router.put('/:id', authorize('admin', 'psychiatrist', 'nurse'), async (req: AuthRequest, res) => {
+// Update patient (admin, psychiatrist, psychologist, nurse)
+router.put('/:id', authorize('admin', 'psychiatrist', 'psychologist', 'nurse'), async (req: AuthRequest, res) => {
     try {
         const id = parseInt(req.params.id);
-        const { full_name, dob, phone, email } = req.body;
+        const { full_name, dob, phone, email, status, gender, diagnosis, ward, room, attending_physician, assigned_therapist } = req.body;
         
-        const updated = await updatePatient(id, { full_name, dob, phone, email });
+        const updated = await updatePatient(id, { full_name, dob, phone, email, status, gender, diagnosis, ward, room, attending_physician, assigned_therapist });
         
         if (!updated) {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Patient not found' } });
