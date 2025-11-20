@@ -8,6 +8,7 @@ import {
     updatePatient,
     deletePatient
 } from '../repositories/patient.repository';
+import { medicationRoutes } from './routes/medication.routes';
 
 const router = Router();
 
@@ -39,6 +40,27 @@ router.get('/:id', async (req: AuthRequest, res) => {
         res.status(500).json({ error: { code: 'FETCH_ERROR', message: error.message } });
     }
 });
+// Get single patient by MRN
+router.get('/mrn/:mrn', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const mrn = req.params.mrn;
+    const patient = await getPatientByMRN(mrn);
+
+    if (!patient) {
+      return res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'Patient not found for this MRN' },
+      });
+    }
+
+    res.status(200).json({ data: patient });
+  } catch (error: any) {
+    console.error('[GET_PATIENT_BY_MRN_ERROR]', error);
+    res
+      .status(500)
+      .json({ error: { code: 'FETCH_ERROR', message: error.message } });
+  }
+});
+
 
 // Search patient by MRN
 router.get('/mrn/:mrn', async (req: AuthRequest, res) => {

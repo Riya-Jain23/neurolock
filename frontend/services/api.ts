@@ -162,37 +162,38 @@ export const patientAPI = {
 
 // Therapy Notes API
 export const therapyNoteAPI = {
-    getAll: async () => {
-        return await apiRequest<any>('/therapy-notes');
-    },
-    
-    getByPatientId: async (patientId: number) => {
-        return await apiRequest<any>(`/therapy-notes/patient/${patientId}`);
-    },
-    
-    getById: async (id: number) => {
-        return await apiRequest<any>(`/therapy-notes/${id}`);
-    },
-    
-    create: async (data: {
-        patient_mrn?: string;
-        patient_id?: number;
-        staff_id?: string;
-        note_content?: string;
-        content?: string;
-    }) => {
-        return await apiRequest<any>('/therapy-notes', {
-            method: 'POST',
-            body: JSON.stringify(data),
-        });
-    },
-    
-    delete: async (id: number) => {
-        return await apiRequest<any>(`/therapy-notes/${id}`, {
-            method: 'DELETE',
-        });
-    },
+  getAll: async () => {
+    return await apiRequest<any>('/therapy-notes');
+  },
+
+  getByPatientId: async (patientId: number) => {
+    return await apiRequest<any>(`/therapy-notes/patient/${patientId}`);
+  },
+
+  getById: async (id: number | string) => {
+    return await apiRequest<any>(`/therapy-notes/${id}`);
+  },
+
+  create: async (data: {
+    patient_mrn?: string;
+    patient_id?: number;
+    staff_id?: string;
+    note_content?: string;
+    content?: string;
+  }) => {
+    return await apiRequest<any>('/therapy-notes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  delete: async (id: number) => {
+    return await apiRequest<any>(`/therapy-notes/${id}`, {
+      method: 'DELETE',
+    });
+  },
 };
+
 
 // Staff API
 export const staffAPI = {

@@ -87,6 +87,11 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
   const [reportType, setReportType] = useState('clinical-summary');
   const [reportPatientId, setReportPatientId] = useState('');
   const [generatingReport, setGeneratingReport] = useState(false);
+    // Note detail modal state
+  const [noteDetailVisible, setNoteDetailVisible] = useState(false);
+  const [noteDetailLoading, setNoteDetailLoading] = useState(false);
+  const [noteDetail, setNoteDetail] = useState<any | null>(null);
+
 
   useEffect(() => {
     loadData();
@@ -235,6 +240,31 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
     );
   }
 };
+
+  const handleOpenNote = async (note: any) => {
+    try {
+      setNoteDetailVisible(true);
+      setNoteDetailLoading(true);
+      setNoteDetail(null);
+
+      const response = await therapyNoteAPI.getById(note.id);
+      const data = response?.data || response;
+
+      // data should be the decrypted note from backend:
+      // { id, patient_id, author, created_at, content }
+      setNoteDetail({
+        ...note,
+        ...data,
+      });
+    } catch (error: any) {
+      console.error('Failed to load note:', error);
+      RNAlert.alert('Error', error.message || 'Failed to load note');
+      setNoteDetailVisible(false);
+    } finally {
+      setNoteDetailLoading(false);
+    }
+  };
+
 
 
   const handleAddMedication = async () => {
@@ -511,24 +541,33 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
 
                 <View style={styles.notesList}>
                   {notes.length === 0 ? (
-                    <Text style={styles.emptyText}>No clinical notes yet</Text>
-                  ) : (
-                    notes.slice(0, 5).map((note) => (
-                      <View key={note.id} style={styles.noteItem}>
-                        <View style={styles.noteHeader}>
-                          <Text style={styles.noteTitle}>
-                            Note - {patients.find((p) => p.id === note.patient_mrn)?.name || note.patient_mrn}
+                      <Alert variant="default">
+                        No notes recorded yet. Add a note from a patient’s session.
+                      </Alert>
+                    ) : (
+                      notes.map((note: any) => (
+                        <TouchableOpacity
+                          key={note.id}
+                          style={styles.noteItem}
+                          onPress={() => handleOpenNote(note)}
+                          activeOpacity={0.8}
+                        >
+                          <View style={styles.noteHeaderRow}>
+                            <Text style={styles.noteTitle}>
+                              Note - {note.patient_mrn || note.patient_id}
+                            </Text>
+                            <Badge variant="outline">
+                              {new Date(note.created_at).toISOString().split('T')[0]}
+                            </Badge>
+                          </View>
+                          <Text style={styles.noteMeta}>Author: {note.author}</Text>
+                          <Text numberOfLines={3} style={styles.notePreview}>
+                            {note.preview || 'Encrypted content'}
                           </Text>
-                          <Text style={styles.noteDate}>
-                            {new Date(note.created_at).toLocaleDateString()}
-                          </Text>
-                        </View>
-                        <Text style={styles.noteContent} numberOfLines={2}>
-                          {note.note_content}
-                        </Text>
-                      </View>
-                    ))
-                  )}
+                        </TouchableOpacity>
+                      ))
+                    )}
+
                 </View>
               </CardContent>
             </Card>
@@ -1002,6 +1041,82 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
           </View>
         </View>
       </Modal>
+            {/* Note Detail Modal (decrypted view for authorized staff) */}
+      <Modal
+        visible={noteDetailVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setNoteDetailVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Clinical Note</Text>
+
+            {noteDetailLoading ? (
+              <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+                <ActivityIndicator size="small" color="#4f46e5" />
+                <Text style={{ color: '#e5e7eb', marginTop: 8 }}>
+                  Decrypting note…
+                </Text>
+              </View>
+            ) : noteDetail ? (
+              <>
+                <Text style={styles.modalMetaText}>
+                  Patient:{' '}
+                  {noteDetail.patient_mrn || noteDetail.patient_id || 'Unknown'}
+                </Text>
+                <Text style={styles.modalMetaText}>
+                  Author: {noteDetail.author || 'Unknown'}
+                </Text>
+                <Text style={styles.modalMetaText}>
+                  Created:{' '}
+                  {noteDetail.created_at
+                    ? new Date(noteDetail.created_at)
+                        .toISOString()
+                        .split('T')[0]
+                    : 'Unknown'}
+                </Text>
+
+                <Text
+                  style={[
+                    styles.modalMetaText,
+                    { marginTop: 12, marginBottom: 4, fontWeight: '600' },
+                  ]}
+                >
+                  Note content
+                </Text>
+                <ScrollView
+                  style={{
+                    maxHeight: 240,
+                    borderWidth: 1,
+                    borderColor: 'rgba(148,163,184,0.6)',
+                    borderRadius: 8,
+                    padding: 10,
+                  }}
+                >
+                  <Text style={{ color: '#e5e7eb', fontSize: 14, lineHeight: 20 }}>
+                    {noteDetail.content || '(No content)'}
+                  </Text>
+                </ScrollView>
+              </>
+            ) : (
+              <Text style={styles.modalMetaText}>
+                No note selected or failed to load.
+              </Text>
+            )}
+
+            <View style={styles.modalButtonRow}>
+              <Button
+                style={styles.modalButton}
+                onPress={() => setNoteDetailVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Close</Text>
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -1033,6 +1148,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+    noteHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  noteMeta: {
+    fontSize: 13,
+    color: '#9ca3af',
+    marginTop: 2,
+  },
+  notePreview: {
+    fontSize: 13,
+    color: '#cbd5f5',
+    marginTop: 4,
+  },
+  modalContainer: {
+    width: '100%',
+    backgroundColor: '#020617',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.5)',
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 12,
+    gap: 8,
+  },
+  modalButtonText: {
+    color: '#e5e7eb',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalMetaText: {
+    fontSize: 13,
+    color: '#9ca3af',
+    marginTop: 2,
   },
   headerButton: {
     padding: 8,
