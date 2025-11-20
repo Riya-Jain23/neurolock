@@ -8,7 +8,6 @@ import {
     updatePatient,
     deletePatient
 } from '../repositories/patient.repository';
-import { medicationRoutes } from './routes/medication.routes';
 
 const router = Router();
 
