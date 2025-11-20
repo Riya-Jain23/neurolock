@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Modal,
 } from 'react-native';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card.native';
 import { Badge } from './ui/badge.native';
@@ -48,30 +47,6 @@ interface AlertItem {
 export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps) {
   const { staffId } = route.params || { staffId: 'STAFF-004' };
   const [searchTerm, setSearchTerm] = useState('');
-  const [fullScheduleModalVisible, setFullScheduleModalVisible] = useState(false);
-  const [alerts, setAlerts] = useState<AlertItem[]>([
-    {
-      id: 'A001',
-      patient: 'Patient B',
-      message: 'Medication refill needed',
-      priority: 'High',
-      time: '10:15 AM',
-    },
-    {
-      id: 'A002',
-      patient: 'Patient A',
-      message: 'Scheduled vitals check',
-      priority: 'Medium',
-      time: '11:30 AM',
-    },
-    {
-      id: 'A003',
-      patient: 'Patient C',
-      message: 'Review lab results',
-      priority: 'Low',
-      time: '02:00 PM',
-    },
-  ]);
 
   const patients: Patient[] = [
     {
@@ -135,6 +110,30 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
     },
   ];
 
+  const alerts: AlertItem[] = [
+    {
+      id: 'A001',
+      patient: 'Patient B',
+      message: 'Medication refill needed',
+      priority: 'High',
+      time: '10:15 AM',
+    },
+    {
+      id: 'A002',
+      patient: 'Patient A',
+      message: 'Scheduled vitals check',
+      priority: 'Medium',
+      time: '11:30 AM',
+    },
+    {
+      id: 'A003',
+      patient: 'Patient C',
+      message: 'Review lab results',
+      priority: 'Low',
+      time: '02:00 PM',
+    },
+  ];
+
   const filteredPatients = patients.filter(
     (patient) =>
       patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,10 +170,6 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
     return '#10b981';
   };
 
-  const handleMarkAllRead = () => {
-    setAlerts(alerts.map(alert => ({ ...alert, isRead: true })));
-  };
-
   const highPriorityAlerts = alerts.filter((a) => a.priority === 'High');
 
   return (
@@ -187,22 +182,12 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
               <Text style={styles.headerIcon}>🏥</Text>
               <Text style={styles.headerTitle}>Nurse Dashboard</Text>
             </View>
-            <View style={styles.headerRight}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('SettingsNew')}
-                activeOpacity={0.7}
-                style={styles.headerButton}
-              >
-                <Text style={styles.headerButtonIcon}>⚙️</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('WelcomeNew')}
-                activeOpacity={0.7}
-                style={styles.headerButton}
-              >
-                <Text style={styles.logoutIcon}>🚪</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('WelcomeNew')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.logoutIcon}>🚪</Text>
+            </TouchableOpacity>
           </View>
           <Text style={styles.headerSubtitle}>{staffId}</Text>
         </View>
@@ -292,13 +277,6 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
           <TabsContent value="medications">
             <View style={styles.tabHeader}>
               <Text style={styles.tabTitle}>Medication Schedule</Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                activeOpacity={0.7}
-                onPress={() => setFullScheduleModalVisible(true)}
-              >
-                <Text style={styles.addButtonText}>📋 Full Schedule</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Medication Summary */}
@@ -361,13 +339,6 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
           <TabsContent value="alerts">
             <View style={styles.tabHeader}>
               <Text style={styles.tabTitle}>Patient Alerts</Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                activeOpacity={0.7}
-                onPress={handleMarkAllRead}
-              >
-                <Text style={styles.addButtonText}>✓ Mark All Read</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Alert Summary */}
@@ -432,67 +403,6 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
           </TabsContent>
         </Tabs>
       </ScrollView>
-
-      {/* Full Schedule Modal */}
-      <Modal
-        visible={fullScheduleModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setFullScheduleModalVisible(false)}
-      >
-        <SafeAreaView style={styles.scheduleModalContainer}>
-          <View style={styles.scheduleModalHeader}>
-            <Text style={styles.scheduleModalTitle}>Full Medication Schedule</Text>
-            <TouchableOpacity
-              onPress={() => setFullScheduleModalVisible(false)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.scheduleModalCloseButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.scheduleModalContent} showsVerticalScrollIndicator={false}>
-            {medications.map((med) => (
-              <Card key={med.id} style={styles.scheduleCard}>
-                <CardContent>
-                  <View style={styles.scheduleHeader}>
-                    <View>
-                      <Text style={styles.scheduleMedicationName}>{med.medication}</Text>
-                      <Text style={styles.schedulePatientName}>{med.patient}</Text>
-                    </View>
-                    <Badge variant={getMedicationStatusBadge(med.status)}>
-                      <Text style={styles.badgeText}>{med.status}</Text>
-                    </Badge>
-                  </View>
-
-                  <View style={styles.scheduleDetails}>
-                    <View style={styles.scheduleDetailRow}>
-                      <Text style={styles.scheduleDetailLabel}>Dosage:</Text>
-                      <Text style={styles.scheduleDetailValue}>{med.dosage}</Text>
-                    </View>
-                    <View style={styles.scheduleDetailRow}>
-                      <Text style={styles.scheduleDetailLabel}>Time:</Text>
-                      <Text style={styles.scheduleDetailValue}>{med.time}</Text>
-                    </View>
-                    <View style={styles.scheduleDetailRow}>
-                      <Text style={styles.scheduleDetailLabel}>Status:</Text>
-                      <Text style={styles.scheduleDetailValue}>{med.status}</Text>
-                    </View>
-                  </View>
-                </CardContent>
-              </Card>
-            ))}
-          </ScrollView>
-
-          <TouchableOpacity
-            style={styles.scheduleCloseButton}
-            onPress={() => setFullScheduleModalVisible(false)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.scheduleCloseButtonText}>Close Schedule</Text>
-          </TouchableOpacity>
-        </SafeAreaView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -519,17 +429,6 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerButton: {
-    padding: 8,
-  },
-  headerButtonIcon: {
-    fontSize: 20,
   },
   headerIcon: {
     fontSize: 20,
@@ -559,9 +458,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   tabHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 16,
   },
   tabTitle: {
@@ -656,113 +552,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1f2937',
   },
+  medicationDetails: {
+    gap: 8,
+  },
   medicationDetailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
   },
   medicationDetailLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#6b7280',
   },
   medicationDetailValue: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#1f2937',
     fontWeight: '500',
-  },
-  medicationDetails: {
-    marginTop: 8,
-  },
-  addButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#3b82f6',
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  scheduleModalContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  scheduleModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  scheduleModalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1f2937',
-  },
-  scheduleModalCloseButton: {
-    fontSize: 24,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-  scheduleModalContent: {
-    flex: 1,
-    padding: 16,
-  },
-  scheduleCard: {
-    marginBottom: 12,
-  },
-  scheduleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  scheduleMedicationName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  schedulePatientName: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 4,
-  },
-  scheduleDetails: {
-    gap: 8,
-  },
-  scheduleDetailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  scheduleDetailLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  scheduleDetailValue: {
-    fontSize: 12,
-    color: '#1f2937',
-    fontWeight: '600',
-  },
-  scheduleCloseButton: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    paddingVertical: 12,
-    backgroundColor: '#3b82f6',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  scheduleCloseButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
   },
   alertList: {
     gap: 12,

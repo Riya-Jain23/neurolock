@@ -93,35 +93,60 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
   }, []);
 
   const loadData = async () => {
-    try {
-      setLoading(true);
-      const patientsResponse = await patientAPI.getAll();
-      const notesResponse = await therapyNoteAPI.getAll();
-      
-      const patientsData = patientsResponse?.data || patientsResponse || [];
-      const notesData = notesResponse?.data || notesResponse || [];
-      
-      setPatients(
-        (Array.isArray(patientsData) ? patientsData : []).map((p: any) => ({
-          id: p.mrn || p.id,
-          name: p.full_name || p.name,
-          diagnosis: p.diagnosis || 'No diagnosis',
-          lastVisit: new Date(p.created_at || Date.now()).toISOString().split('T')[0],
-          medication: p.current_medication || 'None prescribed',
-        }))
-      );
-      setNotes(Array.isArray(notesData) ? notesData : []);
-      
-      // Mock medications and reports for now
-      setMedications([]);
-      setReports([]);
-    } catch (error) {
-      console.error('Failed to load data:', error);
-      RNAlert.alert('Error', 'Failed to load data from server');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const patientsResponse = await patientAPI.getAll();
+    const notesResponse = await therapyNoteAPI.getAll();
+
+    const patientsData = patientsResponse?.data || patientsResponse || [];
+    const notesData = notesResponse?.data || notesResponse || [];
+
+    const patientsArray = Array.isArray(patientsData) ? patientsData : [];
+    const notesArray = Array.isArray(notesData) ? notesData : [];
+
+    // Map patient_id -> MRN so notes can show "Note - <patient name>"
+    const patientIdToMrn = new Map<number, string>();
+    patientsArray.forEach((p: any) => {
+      if (p && p.id != null && p.mrn) {
+        patientIdToMrn.set(p.id, p.mrn);
+      }
+    });
+
+    setPatients(
+      patientsArray.map((p: any) => ({
+        id: p.mrn || p.id, // keep MRN as the external id used in the UI
+        mrn: p.mrn,
+        name: p.full_name || p.name,
+        diagnosis: p.diagnosis || 'No diagnosis',
+        lastVisit: new Date(p.created_at || Date.now())
+          .toISOString()
+          .split('T')[0],
+        medication: p.current_medication || 'None prescribed',
+      }))
+    );
+
+    setNotes(
+      notesArray.map((n: any) => ({
+        ...n,
+        // ensure patient_mrn is always present for the UI
+        patient_mrn:
+          n.patient_mrn ||
+          (n.patient_id != null ? patientIdToMrn.get(n.patient_id) : undefined) ||
+          n.patient_id,
+      }))
+    );
+
+    // Medications + reports still local state for now
+    setMedications([]);
+    setReports([]);
+  } catch (error) {
+    console.error('Failed to load data:', error);
+    RNAlert.alert('Error', 'Failed to load data from server');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -130,70 +155,87 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
   };
 
   const handleAddPatient = async () => {
-    if (!newPatientName || !newPatientDOB || !newPatientGender) {
-      RNAlert.alert('Validation Error', 'Please fill in all required fields');
-      return;
-    }
+  if (!newPatientName || !newPatientDOB || !newPatientGender) {
+    RNAlert.alert('Validation Error', 'Please fill in all required fields');
+    return;
+  }
 
-    try {
-      const mrn = `MRN${Date.now()}`;
-      const newPatient = await patientAPI.create({
-        mrn,
-        full_name: newPatientName,
-        dob: newPatientDOB,
-        phone: newPatientContact,
-        email: `patient${Date.now()}@hospital.local`,
-      });
+  try {
+    const mrn = `MRN${Date.now()}`;
 
-      setPatients([
-        ...patients,
-        {
-          id: newPatient.mrn,
-          name: newPatient.name,
-          diagnosis: newPatient.diagnosis || 'No diagnosis',
-          lastVisit: new Date().toISOString().split('T')[0],
-          medication: 'None prescribed',
-        },
-      ]);
+    const response = await patientAPI.create({
+      mrn,
+      full_name: newPatientName,
+      dob: newPatientDOB,
+      phone: newPatientContact,
+      email: `patient${Date.now()}@hospital.local`,
+    });
 
-      setNewPatientModalVisible(false);
-      setNewPatientName('');
-      setNewPatientDOB('');
-      setNewPatientGender('');
-      setNewPatientContact('');
-      setNewPatientDiagnosis('');
+    const created = response?.data || response;
 
-      RNAlert.alert('Success', 'Patient added successfully');
-    } catch (error) {
-      console.error('Failed to add patient:', error);
-      RNAlert.alert('Error', 'Failed to add patient');
-    }
-  };
+    // re-fetch from backend so list is dynamic
+    await loadData();
+
+    setNewPatientModalVisible(false);
+    setNewPatientName('');
+    setNewPatientDOB('');
+    setNewPatientGender('');
+    setNewPatientContact('');
+    setNewPatientDiagnosis('');
+
+    RNAlert.alert(
+      'Success',
+      `Patient ${(created && (created.full_name || created.name)) || newPatientName} added successfully`
+    );
+  } catch (error: any) {
+    console.error('Failed to add patient:', error);
+    RNAlert.alert('Error', error.message || 'Failed to add patient');
+  }
+};
+
+
 
   const handleAddNote = async () => {
-    if (!newNoteContent || !newNotePatientId) {
-      RNAlert.alert('Validation Error', 'Please select a patient and enter note content');
-      return;
-    }
+  if (!newNoteContent || !newNotePatientId) {
+    RNAlert.alert(
+      'Validation Error',
+      'Please select a patient and enter note content'
+    );
+    return;
+  }
 
-    try {
-      const newNote = await therapyNoteAPI.create({
-        patient_mrn: newNotePatientId,
-        staff_id: staffId,
-        note_content: newNoteContent,
-      });
+  try {
+    // Send MRN as identifier – backend now resolves it to real patient_id
+    const response = await therapyNoteAPI.create({
+      patient_mrn: newNotePatientId,
+      staff_id: staffId,
+      note_content: newNoteContent,
+    });
 
-      setNotes([newNote, ...notes]);
-      setNewNoteModalVisible(false);
-      setNewNoteContent('');
-      setNewNotePatientId('');
+    const created = response?.data || response;
 
-      RNAlert.alert('Success', 'Clinical note created successfully');
-    } catch (error) {
-      console.error('Failed to create note:', error);
-      RNAlert.alert('Error', 'Failed to create clinical note');
-    }
-  };
+    // Reload everything from server so notes list is always up-to-date
+    await loadData();
+
+    setNewNoteModalVisible(false);
+    setNewNoteContent('');
+    setNewNotePatientId('');
+
+    RNAlert.alert(
+      'Success',
+      created?.id
+        ? 'Clinical note created & stored securely'
+        : 'Clinical note created successfully'
+    );
+  } catch (error: any) {
+    console.error('Failed to create note:', error);
+    RNAlert.alert(
+      'Error',
+      error.message || 'Failed to create clinical note'
+    );
+  }
+};
+
 
   const handleAddMedication = async () => {
     if (!medicationName || !medicationDosage || !medicationFrequency || !medicationPatientId) {

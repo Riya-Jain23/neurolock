@@ -69,11 +69,6 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
   const [verificationPassword, setVerificationPassword] = useState('');
   const [pendingAdminAction, setPendingAdminAction] = useState<(() => Promise<void>) | null>(null);
   const [criticalAlertsDismissed, setCriticalAlertsDismissed] = useState(false);
-  
-  // Bulk assignment modal state
-  const [bulkAssignModalVisible, setBulkAssignModalVisible] = useState(false);
-  const [selectedStaffForBulk, setSelectedStaffForBulk] = useState<Set<string>>(new Set());
-  const [bulkAssignRole, setBulkAssignRole] = useState<string>('');
 
   // Staff data state (fetched from backend)
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -184,62 +179,6 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
       setPasswordModalVisible(true);
     } else {
       await performRoleChange(staff, newRole);
-    }
-  };
-
-  const handleToggleBulkSelection = (staffId: string) => {
-    const newSelection = new Set(selectedStaffForBulk);
-    if (newSelection.has(staffId)) {
-      newSelection.delete(staffId);
-    } else {
-      newSelection.add(staffId);
-    }
-    setSelectedStaffForBulk(newSelection);
-  };
-
-  const handleSelectAllStaff = () => {
-    if (selectedStaffForBulk.size === staffMembers.length) {
-      setSelectedStaffForBulk(new Set());
-    } else {
-      const allIds = new Set(staffMembers.map(s => s.id));
-      setSelectedStaffForBulk(allIds);
-    }
-  };
-
-  const handleBulkAssign = async () => {
-    if (selectedStaffForBulk.size === 0 || !bulkAssignRole) {
-      RNAlert.alert('Error', 'Please select staff members and a role');
-      return;
-    }
-
-    try {
-      const staffToUpdate = staffMembers.filter(s => selectedStaffForBulk.has(s.id));
-      
-      // Update all selected staff
-      await Promise.all(
-        staffToUpdate.map(staff =>
-          staffAPI.update(parseInt(staff.id), {
-            role: bulkAssignRole.toLowerCase(),
-          })
-        )
-      );
-
-      // Update local state
-      setStaffMembers((prev) =>
-        prev.map((staff) =>
-          selectedStaffForBulk.has(staff.id)
-            ? { ...staff, role: bulkAssignRole }
-            : staff
-        )
-      );
-
-      setBulkAssignModalVisible(false);
-      setSelectedStaffForBulk(new Set());
-      setBulkAssignRole('');
-      RNAlert.alert('Success', `Updated ${staffToUpdate.length} staff member(s) to ${bulkAssignRole}`);
-    } catch (error: any) {
-      console.error('Failed to bulk assign roles:', error);
-      RNAlert.alert('Error', error.message || 'Failed to bulk assign roles');
     }
   };
 
@@ -440,22 +379,12 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
               <Text style={styles.headerIcon}>🔐</Text>
               <Text style={styles.headerTitle}>Admin Dashboard</Text>
             </View>
-            <View style={styles.headerRight}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('SettingsNew')}
-                activeOpacity={0.7}
-                style={styles.headerButton}
-              >
-                <Text style={styles.headerButtonIcon}>⚙️</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('WelcomeNew')}
-                activeOpacity={0.7}
-                style={styles.headerButton}
-              >
-                <Text style={styles.logoutIcon}>🚪</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('WelcomeNew')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.logoutIcon}>🚪</Text>
+            </TouchableOpacity>
           </View>
           <Text style={styles.headerSubtitle}>{staffId}</Text>
         </View>
@@ -548,9 +477,6 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
           <TabsContent value="roles">
             <View style={styles.tabHeader}>
               <Text style={styles.tabTitle}>Role Permissions Matrix</Text>
-              <TouchableOpacity style={styles.addButton} activeOpacity={0.7} onPress={() => setBulkAssignModalVisible(true)}>
-                <Text style={styles.addButtonText}>📋 Bulk Assign</Text>
-              </TouchableOpacity>
             </View>
 
             <Card style={styles.permissionsCard}>
@@ -644,59 +570,6 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
               </TouchableOpacity>
             </View>
 
-            {/* Audit Statistics */}
-            <View style={styles.auditStatsGrid}>
-              <Card style={styles.auditStatCard}>
-                <CardContent style={styles.auditStatContent}>
-                  <Text style={styles.auditStatIcon}>📊</Text>
-                  <Text style={styles.auditStatValue}>{auditLogs.length}</Text>
-                  <Text style={styles.auditStatLabel}>Total Actions Today</Text>
-                </CardContent>
-              </Card>
-              <Card style={styles.auditStatCard}>
-                <CardContent style={styles.auditStatContent}>
-                  <Text style={styles.auditStatIcon}>👥</Text>
-                  <Text style={styles.auditStatValue}>{new Set(auditLogs.map(l => l.user)).size}</Text>
-                  <Text style={styles.auditStatLabel}>Users Active</Text>
-                </CardContent>
-              </Card>
-              <Card style={styles.auditStatCard}>
-                <CardContent style={styles.auditStatContent}>
-                  <Text style={styles.auditStatIcon}>❌</Text>
-                  <Text style={styles.auditStatValue}>12</Text>
-                  <Text style={styles.auditStatLabel}>Failed Logins</Text>
-                </CardContent>
-              </Card>
-              <Card style={styles.auditStatCard}>
-                <CardContent style={styles.auditStatContent}>
-                  <Text style={styles.auditStatIcon}>🚨</Text>
-                  <Text style={styles.auditStatValue}>{securityAlerts.length}</Text>
-                  <Text style={styles.auditStatLabel}>Security Alerts</Text>
-                </CardContent>
-              </Card>
-            </View>
-
-            {/* Action Summary */}
-            <Card style={styles.auditSummaryCard}>
-              <CardHeader>
-                <CardTitle>Action Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <View style={styles.actionSummaryItem}>
-                  <Text style={styles.actionSummaryLabel}>📖 View Records</Text>
-                  <Text style={styles.actionSummaryCount}>{auditLogs.filter(l => l.action.includes('Accessed')).length}</Text>
-                </View>
-                <View style={styles.actionSummaryItem}>
-                  <Text style={styles.actionSummaryLabel}>✏️ Modifications</Text>
-                  <Text style={styles.actionSummaryCount}>{auditLogs.filter(l => l.action.includes('Modified')).length}</Text>
-                </View>
-                <View style={styles.actionSummaryItem}>
-                  <Text style={styles.actionSummaryLabel}>➕ Create Operations</Text>
-                  <Text style={styles.actionSummaryCount}>{auditLogs.filter(l => l.action.includes('Created')).length}</Text>
-                </View>
-              </CardContent>
-            </Card>
-
             <View style={styles.auditList}>
               {auditLogs.map((log) => (
                 <Card key={log.id} style={styles.auditCard}>
@@ -723,30 +596,20 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
             <View style={styles.metricsGrid}>
               <Card style={styles.metricCard}>
                 <CardContent style={styles.metricContent}>
-                  <Text style={styles.metricIcon}>❌</Text>
-                  <Text style={styles.metricValue}>8</Text>
-                  <Text style={styles.metricLabel}>Failed Login Attempts (24h)</Text>
+                  <Text style={styles.metricValue}>12</Text>
+                  <Text style={styles.metricLabel}>Failed Logins</Text>
                 </CardContent>
               </Card>
               <Card style={styles.metricCard}>
                 <CardContent style={styles.metricContent}>
-                  <Text style={styles.metricIcon}>🚫</Text>
                   <Text style={styles.metricValue}>3</Text>
-                  <Text style={styles.metricLabel}>Suspicious IPs Blocked</Text>
+                  <Text style={styles.metricLabel}>Blocked IPs</Text>
                 </CardContent>
               </Card>
               <Card style={styles.metricCard}>
                 <CardContent style={styles.metricContent}>
-                  <Text style={styles.metricIcon}>🔐</Text>
-                  <Text style={styles.metricValue}>2</Text>
-                  <Text style={styles.metricLabel}>MFA Bypass Attempts</Text>
-                </CardContent>
-              </Card>
-              <Card style={styles.metricCard}>
-                <CardContent style={styles.metricContent}>
-                  <Text style={styles.metricIcon}>⚠️</Text>
-                  <Text style={styles.metricValue}>1</Text>
-                  <Text style={styles.metricLabel}>Unauthorized Access Attempts</Text>
+                  <Text style={styles.metricValue}>5</Text>
+                  <Text style={styles.metricLabel}>MFA Bypass</Text>
                 </CardContent>
               </Card>
             </View>
@@ -910,119 +773,6 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
         </View>
       </Modal>
 
-      {/* Bulk Assignment Modal */}
-      <Modal
-        visible={bulkAssignModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => {
-          setBulkAssignModalVisible(false);
-          setSelectedStaffForBulk(new Set());
-          setBulkAssignRole('');
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
-            <Text style={styles.modalTitle}>📋 Bulk Role Assignment</Text>
-            
-            <View style={styles.bulkModalSection}>
-              <View style={styles.bulkHeaderRow}>
-                <Text style={styles.bulkSectionTitle}>Select Staff Members</Text>
-                <TouchableOpacity
-                  style={styles.selectAllButton}
-                  onPress={handleSelectAllStaff}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.selectAllButtonText}>
-                    {selectedStaffForBulk.size === staffMembers.length ? '✓ Deselect All' : '✓ Select All'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-              <ScrollView style={styles.bulkStaffList} showsVerticalScrollIndicator={false}>
-                {staffMembers.map((staff) => (
-                  <TouchableOpacity
-                    key={staff.id}
-                    style={[
-                      styles.bulkStaffItem,
-                      selectedStaffForBulk.has(staff.id) && styles.bulkStaffItemSelected,
-                    ]}
-                    onPress={() => handleToggleBulkSelection(staff.id)}
-                    activeOpacity={0.6}
-                  >
-                    <View style={styles.bulkCheckbox}>
-                      <Text style={styles.bulkCheckboxText}>
-                        {selectedStaffForBulk.has(staff.id) ? '☑️' : '☐'}
-                      </Text>
-                    </View>
-                    <View style={styles.bulkStaffInfo}>
-                      <Text style={styles.bulkStaffName}>{staff.name}</Text>
-                      <Text style={styles.bulkStaffRole}>{staff.role}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <Text style={styles.bulkSelectionCount}>
-                {selectedStaffForBulk.size} of {staffMembers.length} selected
-              </Text>
-            </View>
-
-            <View style={styles.bulkModalSection}>
-              <Text style={styles.bulkSectionTitle}>Assign Role</Text>
-              <View style={styles.roleOptionsContainer}>
-                {['Psychiatrist', 'Psychologist', 'Therapist', 'Nurse', 'Admin'].map((role) => (
-                  <TouchableOpacity
-                    key={role}
-                    style={[
-                      styles.roleOption,
-                      bulkAssignRole === role && styles.roleOptionActive,
-                    ]}
-                    onPress={() => setBulkAssignRole(role)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.roleOptionText,
-                        bulkAssignRole === role && styles.roleOptionTextActive,
-                      ]}
-                    >
-                      {role}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.modalButtonCancel}
-                onPress={() => {
-                  setBulkAssignModalVisible(false);
-                  setSelectedStaffForBulk(new Set());
-                  setBulkAssignRole('');
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.modalButtonCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalButtonSave,
-                  (selectedStaffForBulk.size === 0 || !bulkAssignRole) && styles.modalButtonSaveDisabled,
-                ]}
-                onPress={handleBulkAssign}
-                disabled={selectedStaffForBulk.size === 0 || !bulkAssignRole}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.modalButtonSaveText}>
-                  Assign Role to {selectedStaffForBulk.size} Staff
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
       {/* Password Verification Modal */}
       <Modal
         visible={passwordModalVisible}
@@ -1100,17 +850,6 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerButton: {
-    padding: 8,
-  },
-  headerButtonIcon: {
-    fontSize: 20,
   },
   headerIcon: {
     fontSize: 20,
@@ -1338,20 +1077,15 @@ const styles = StyleSheet.create({
   },
   metricsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 12,
     marginBottom: 16,
   },
   metricCard: {
-    width: '48%',
+    flex: 1,
   },
   metricContent: {
     alignItems: 'center',
     paddingVertical: 16,
-  },
-  metricIcon: {
-    fontSize: 24,
-    marginBottom: 8,
   },
   metricValue: {
     fontSize: 24,
@@ -1363,7 +1097,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6b7280',
     textAlign: 'center',
-    lineHeight: 14,
   },
   securityList: {
     gap: 12,
@@ -1599,167 +1332,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#9ca3af',
-  },
-  // Bulk assignment styles
-  bulkModalSection: {
-    marginBottom: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  bulkHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  bulkSectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  selectAllButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 6,
-  },
-  selectAllButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  bulkStaffList: {
-    maxHeight: 200,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  bulkStaffItem: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-    alignItems: 'center',
-  },
-  bulkStaffItemSelected: {
-    backgroundColor: '#eff6ff',
-  },
-  bulkCheckbox: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  bulkCheckboxText: {
-    fontSize: 16,
-  },
-  bulkStaffInfo: {
-    flex: 1,
-  },
-  bulkStaffName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 2,
-  },
-  bulkStaffRole: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  bulkSelectionCount: {
-    fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  roleOptionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  roleOption: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  roleOptionActive: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
-  },
-  roleOptionText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  roleOptionTextActive: {
-    color: '#ffffff',
-  },
-  modalButtonSaveDisabled: {
-    backgroundColor: '#d1d5db',
-    opacity: 0.6,
-  },
-  // Audit statistics styles
-  auditStatsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
-  },
-  auditStatCard: {
-    width: '48%',
-  },
-  auditStatContent: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  auditStatIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  auditStatValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  auditStatLabel: {
-    fontSize: 11,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 14,
-  },
-  auditSummaryCard: {
-    marginBottom: 16,
-  },
-  actionSummaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  actionSummaryLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#1f2937',
-  },
-  actionSummaryCount: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#3b82f6',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: '#eff6ff',
-    borderRadius: 6,
-    minWidth: 40,
-    textAlign: 'center',
   },
 });

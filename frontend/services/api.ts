@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
 
-// Get API URL from environment or use localhost as fallback
-const API_BASE_URL = 'http://192.168.45.39:4311/api';
+const API_BASE_URL = 'http://192.168.52.154:4311/api'; // Change to your local IP
 
 // Token management
 const TOKEN_KEY = '@neurolock_token';
@@ -84,25 +82,17 @@ async function apiRequest<T>(
 // Authentication API
 export const authAPI = {
     login: async (email: string, password: string) => {
-        console.log(`[API] Login request to: ${API_BASE_URL}/auth/login`);
-        console.log(`[API] Email: ${email}`);
-        try {
-            const response = await apiRequest<any>('/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ email, password }),
-            });
-            console.log('[API] Login response:', response);
-            
-            if (response.data.token) {
-                await setToken(response.data.token);
-                await setUser(response.data.staff);
-            }
-            
-            return response;
-        } catch (error) {
-            console.error('[API] Login error:', error);
-            throw error;
+        const response = await apiRequest<any>('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+        });
+        
+        if (response.data.token) {
+            await setToken(response.data.token);
+            await setUser(response.data.staff);
         }
+        
+        return response;
     },
     
     register: async (email: string, password: string, name: string, role: string) => {

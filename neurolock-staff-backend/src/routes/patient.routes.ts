@@ -56,49 +56,55 @@ router.get('/mrn/:mrn', async (req: AuthRequest, res) => {
 });
 
 // Create new patient (admin, psychiatrist, nurse, psychologist)
-router.post('/', authorize('admin', 'psychiatrist', 'nurse', 'psychologist'), async (req: AuthRequest, res) => {
+// Create new patient (admin, psychiatrist, therapist, nurse, psychologist)
+router.post(
+  '/',
+  authorize('admin', 'psychiatrist', 'therapist', 'nurse', 'psychologist'),
+  async (req: AuthRequest, res) => {
     try {
-        // Accept flexible field names
-        const mrn = req.body.mrn || `PAT-${Date.now()}`; // Auto-generate MRN if not provided
-        const full_name = req.body.full_name || req.body.name;
-        const dob = req.body.dob || req.body.date_of_birth;
-        const phone = req.body.phone || req.body.contact_number;
-        const email = req.body.email;
-        
-        if (!full_name) {
-            return res.status(400).json({ 
-                error: { code: 'VALIDATION_ERROR', message: 'Patient name is required' } 
-            });
-        }
-        
-        // Check if MRN already exists (only if explicitly provided)
-        if (req.body.mrn) {
-            const existing = await getPatientByMRN(mrn);
-            if (existing) {
-                return res.status(409).json({ 
-                    error: { code: 'DUPLICATE_MRN', message: 'Patient with this MRN already exists' } 
-                });
-            }
-        }
-        
-        const patientId = await createPatient({ 
-            mrn, 
-            full_name, 
-            dob, 
-            phone, 
-            email
+      // Accept flexible field names
+      const mrn = req.body.mrn || `PAT-${Date.now()}`; // Auto-generate MRN if not provided
+      const full_name = req.body.full_name || req.body.name;
+      const dob = req.body.dob || req.body.date_of_birth;
+      const phone = req.body.phone || req.body.contact_number;
+      const email = req.body.email;
+
+      if (!full_name) {
+        return res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Patient name is required' },
         });
-        const patient = await getPatientById(patientId);
-        
-        res.status(201).json({ 
-            data: patient, 
-            meta: { message: 'Patient created successfully' } 
-        });
+      }
+
+      // Check if MRN already exists (only if explicitly provided)
+      if (req.body.mrn) {
+        const existing = await getPatientByMRN(mrn);
+        if (existing) {
+          return res.status(409).json({
+            error: { code: 'DUPLICATE_MRN', message: 'Patient with this MRN already exists' },
+          });
+        }
+      }
+
+      const patientId = await createPatient({
+        mrn,
+        full_name,
+        dob,
+        phone,
+        email,
+      });
+      const patient = await getPatientById(patientId);
+
+      res.status(201).json({
+        data: patient,
+        meta: { message: 'Patient created successfully' },
+      });
     } catch (error: any) {
-        console.error('[CREATE_PATIENT_ERROR]', error);
-        res.status(500).json({ error: { code: 'CREATE_ERROR', message: error.message } });
+      console.error('[CREATE_PATIENT_ERROR]', error);
+      res.status(500).json({ error: { code: 'CREATE_ERROR', message: error.message } });
     }
-});
+  }
+);
+
 
 // Update patient (admin, psychiatrist, nurse)
 router.put('/:id', authorize('admin', 'psychiatrist', 'nurse'), async (req: AuthRequest, res) => {

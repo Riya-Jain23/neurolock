@@ -5,9 +5,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "extra": {
-      "apiUrl": "http://localhost:4311/api"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.neurolock.app",
@@ -23,7 +20,8 @@
       ]
     },
     "plugins": [
-      "expo-local-authentication"
+      "expo-local-authentication",
+      "expo-asset"
     ]
   }
 }
