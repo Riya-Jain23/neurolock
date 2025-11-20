@@ -42,12 +42,15 @@ export function LoginScreenNew({ navigation }: LoginScreenNewProps) {
     }
 
     try {
+      console.log(`[LOGIN] Attempting to login with email: ${staffId}`);
       const response = await authAPI.login(staffId, password);
+      console.log('[LOGIN] Response:', response);
       
       showToast('Login successful!', 'success');
       
       // Navigate based on user role
       const role = response.data.staff.role;
+      console.log('[LOGIN] User role:', role);
       
       switch(role) {
         case 'psychiatrist':
@@ -69,6 +72,7 @@ export function LoginScreenNew({ navigation }: LoginScreenNewProps) {
           navigation.navigate('RoleSelectionNew');
       }
     } catch (err: any) {
+      console.error('[LOGIN] Error:', err.message);
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
 

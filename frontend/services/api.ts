@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.45.10:4311/api'; // Change to your local IP
+const API_BASE_URL = 'http://192.168.52.154:4311/api'; // Change to your local IP
 
 // Token management
 const TOKEN_KEY = '@neurolock_token';
@@ -177,7 +177,7 @@ export const therapyNoteAPI = {
         return await apiRequest<any>(`/therapy-notes/patient/${patientId}`);
     },
     
-    getById: async (id: number) => {
+    getById: async (id: number | string) => {
         return await apiRequest<any>(`/therapy-notes/${id}`);
     },
     
@@ -204,6 +204,7 @@ export const therapyNoteAPI = {
         });
     },
 };
+
 
 // Staff API
 export const staffAPI = {

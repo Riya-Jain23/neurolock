@@ -8,6 +8,7 @@ import {
     getDecryptedNote,
     deleteNote
 } from '../repositories/therapy-note.repository';
+import { getPatientById, getPatientByMRN } from '../repositories/patient.repository';
 
 const router = Router();
 
@@ -63,52 +64,85 @@ router.get('/:id', authorize('psychiatrist', 'psychologist', 'therapist', 'admin
 });
 
 // Create encrypted therapy note
-router.post('/', authorize('psychiatrist', 'psychologist', 'therapist'), async (req: AuthRequest, res) => {
+router.post(
+  '/',
+  authorize('psychiatrist', 'psychologist', 'therapist'),
+  async (req: AuthRequest, res) => {
     try {
-        // Accept both patient_id and patient_mrn formats
-        let patientId = req.body.patient_id;
-        
-        if (!patientId && req.body.patient_mrn) {
-            // If MRN provided, need to look up patient ID
-            // For now, use MRN as identifier if patient_id not provided
-            patientId = req.body.patient_mrn;
-        }
-        
-        // Accept both note_content and content
-        const noteText = req.body.note_content || req.body.content;
-        
-        if (!patientId || !noteText) {
-            return res.status(400).json({ 
-                error: { code: 'VALIDATION_ERROR', message: 'Patient ID and note content are required' } 
-            });
-        }
-        
-        const author = req.user?.email || 'unknown';
-        const actorIp = req.ip;
-        
-        const noteId = await createEncryptedNote(
-            parseInt(patientId),
-            author,
-            noteText,
-            actorIp
-        );
-        
-        res.status(201).json({ 
-            data: { 
-                id: noteId,
-                patient_mrn: patientId,
-                created_at: new Date().toISOString()
-            },
-            meta: { message: 'Therapy note created and encrypted successfully' } 
-        });
-    } catch (error: any) {
-        console.error('[CREATE_NOTE_ERROR]', error);
-        res.status(500).json({ error: { code: 'CREATE_ERROR', message: error.message } });
-    }
-});
+      // Accept both patient_id and patient_mrn formats
+      let patientId: number | null = null;
+      let patientMrn: string | undefined;
+      let patientRecord: any | null = null;
 
-// Delete note (admin only)
-router.delete('/:id', authorize('admin'), async (req: AuthRequest, res) => {
+      if (req.body.patient_id) {
+        patientId = Number(req.body.patient_id);
+        if (Number.isNaN(patientId)) {
+          return res.status(400).json({
+            error: { code: 'VALIDATION_ERROR', message: 'Invalid patient_id' },
+          });
+        }
+
+        patientRecord = await getPatientById(patientId);
+        if (!patientRecord) {
+          return res.status(404).json({
+            error: { code: 'PATIENT_NOT_FOUND', message: 'Patient not found for given id' },
+          });
+        }
+        patientMrn = patientRecord.mrn;
+      } else if (req.body.patient_mrn) {
+        patientMrn = String(req.body.patient_mrn);
+        patientRecord = await getPatientByMRN(patientMrn);
+
+        if (!patientRecord) {
+          return res.status(404).json({
+            error: {
+              code: 'PATIENT_NOT_FOUND',
+              message: `Patient not found for MRN ${patientMrn}`,
+            },
+          });
+        }
+
+        patientId = patientRecord.id;
+      }
+
+      // Accept both note_content and content
+      const noteText = req.body.note_content || req.body.content;
+
+      if (!patientId || !noteText) {
+        return res.status(400).json({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Patient and note content are required',
+          },
+        });
+      }
+
+      const author = req.user?.email || 'unknown';
+      const actorIp = req.ip;
+
+      const noteId = await createEncryptedNote(patientId, author, noteText, actorIp);
+
+      res.status(201).json({
+        data: {
+          id: noteId,
+          patient_id: patientId,
+          patient_mrn: patientMrn,
+          author,
+          created_at: new Date().toISOString(),
+        },
+        meta: { message: 'Therapy note created and encrypted successfully' },
+      });
+    } catch (error: any) {
+      console.error('[CREATE_NOTE_ERROR]', error);
+      res
+        .status(500)
+        .json({ error: { code: 'CREATE_ERROR', message: error.message } });
+    }
+  }
+);
+
+// Delete note (admin or author roles)
+router.delete('/:id', authorize('admin', 'psychiatrist', 'psychologist', 'therapist'), async (req: AuthRequest, res) => {
     try {
         const id = parseInt(req.params.id);
         const deleted = await deleteNote(id);

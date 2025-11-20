@@ -20,7 +20,8 @@
       ]
     },
     "plugins": [
-      "expo-local-authentication"
+      "expo-local-authentication",
+      "expo-asset"
     ]
   }
 }
