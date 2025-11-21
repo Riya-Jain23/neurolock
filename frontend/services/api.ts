@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.45.10:4311/api'; // Change to your local IP
+const API_BASE_URL = 'http://192.168.45.39:4311/api'; // Change to your local IP
 
 // Token management
 const TOKEN_KEY = '@neurolock_token';

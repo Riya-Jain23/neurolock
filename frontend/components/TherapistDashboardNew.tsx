@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.native';
 import { Alert } from './ui/alert.native';
 import { Input } from './ui/input.native';
 import { Progress } from './ui/progress.native';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TherapistDashboardNewProps {
   navigation: any;
@@ -39,6 +40,7 @@ interface SessionLog {
 
 export function TherapistDashboardNew({ navigation, route }: TherapistDashboardNewProps) {
   const { staffId } = route.params || { staffId: 'STAFF-003' };
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
 
   const clients: Client[] = [
@@ -120,14 +122,22 @@ export function TherapistDashboardNew({ navigation, route }: TherapistDashboardN
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerIcon}>🧑‍⚕️</Text>
-              <Text style={styles.headerTitle}>Therapist Dashboard</Text>
+              <Text style={styles.headerTitle}>{t('therapistDashboard')}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('WelcomeNew')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.logoutIcon}>🚪</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.settingsIcon}>⚙️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('WelcomeNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.logoutIcon}>🚪</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Text style={styles.headerSubtitle}>{staffId}</Text>
         </View>
@@ -144,13 +154,13 @@ export function TherapistDashboardNew({ navigation, route }: TherapistDashboardN
         <Tabs defaultValue="clients" style={styles.tabs}>
           <TabsList>
             <TabsTrigger value="clients">
-              <Text>Clients</Text>
+              <Text>{t('totalClients')}</Text>
             </TabsTrigger>
             <TabsTrigger value="sessions">
-              <Text>Sessions</Text>
+              <Text>{t('sessionLogs')}</Text>
             </TabsTrigger>
             <TabsTrigger value="progress">
-              <Text>Progress</Text>
+              <Text>{t('progressTracking')}</Text>
             </TabsTrigger>
           </TabsList>
 
@@ -334,9 +344,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   headerIcon: {
     fontSize: 20,
     marginRight: 8,
+  },
+  settingsIcon: {
+    fontSize: 20,
   },
   headerTitle: {
     fontSize: 20,

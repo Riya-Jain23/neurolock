@@ -25,6 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.native';
 import { Alert } from './ui/alert.native';
 import { Input } from './ui/input.native';
 import { Button } from './ui/button.native';
+import { useLanguage } from '../context/LanguageContext';
 import { patientAPI, therapyNoteAPI, assessmentAPI } from '../services/api';
 
 interface PsychologistDashboardNewProps {
@@ -50,6 +51,7 @@ interface Assessment {
 
 export function PsychologistDashboardNew({ navigation, route }: PsychologistDashboardNewProps) {
   const { staffId } = route.params || { staffId: 'STAFF-002' };
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
@@ -502,14 +504,22 @@ export function PsychologistDashboardNew({ navigation, route }: PsychologistDash
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerIcon}>🧠</Text>
-              <Text style={styles.headerTitle}>Psychologist Dashboard</Text>
+              <Text style={styles.headerTitle}>{t('psychologistDashboard')}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('WelcomeNew')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.logoutIcon}>🚪</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.settingsIcon}>⚙️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('WelcomeNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.logoutIcon}>🚪</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Text style={styles.headerSubtitle}>Dr. {staffId}</Text>
         </View>
@@ -517,34 +527,34 @@ export function PsychologistDashboardNew({ navigation, route }: PsychologistDash
         {/* Access Restrictions Notice */}
         <Alert
           variant="default"
-          title="Access Level: Psychologist"
-          description="No prescription access. Limited to therapy records and assessments."
+          title={`${t('accessLevel')}: ${t('psychologistDashboard').split(' ')[0]}`}
+          description={t('limitedAccess')}
           style={styles.accessAlert}
         />
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="patients" style={styles.tabs}>
           <TabsList>
-            <TabsTrigger value="patients">Patients</TabsTrigger>
-            <TabsTrigger value="notes">Notes</TabsTrigger>
-            <TabsTrigger value="assessments">Assessments</TabsTrigger>
+            <TabsTrigger value="patients">{t('patients')}</TabsTrigger>
+            <TabsTrigger value="notes">{t('notes')}</TabsTrigger>
+            <TabsTrigger value="assessments">{t('assessments')}</TabsTrigger>
           </TabsList>
 
           {/* Patients Tab */}
           <TabsContent value="patients">
             <View style={styles.tabHeader}>
-              <Text style={styles.tabTitle}>Patient List</Text>
+              <Text style={styles.tabTitle}>{t('patients')}</Text>
               <TouchableOpacity
                 style={styles.addButton}
                 activeOpacity={0.7}
                 onPress={() => setNewPatientModalVisible(true)}
               >
-                <Text style={styles.addButtonText}>➕ New Patient</Text>
+                <Text style={styles.addButtonText}>➕ {t('newPatient')}</Text>
               </TouchableOpacity>
             </View>
 
             <Input
-              placeholder="Search patients..."
+              placeholder={t('searchPatients')}
               value={searchTerm}
               onChangeText={setSearchTerm}
               leftIcon={<Text>🔍</Text>}
@@ -677,20 +687,20 @@ export function PsychologistDashboardNew({ navigation, route }: PsychologistDash
           {/* Assessments Tab */}
           <TabsContent value="assessments">
             <View style={styles.tabHeader}>
-              <Text style={styles.tabTitle}>Psychological Assessments</Text>
+              <Text style={styles.tabTitle}>{t('assessments')}</Text>
               <TouchableOpacity
                 style={styles.addButton}
                 activeOpacity={0.7}
                 onPress={() => setNewAssessmentModalVisible(true)}
               >
-                <Text style={styles.addButtonText}>📋 New Assessment</Text>
+                <Text style={styles.addButtonText}>📋 {t('newAssessment')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Scheduled Assessments List */}
             <Card style={styles.scheduledCard}>
               <CardHeader>
-                <CardTitle>Scheduled Assessments</CardTitle>
+                <CardTitle>{t('scheduledAssessments')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {assessments.length > 0 ? (
@@ -733,7 +743,7 @@ export function PsychologistDashboardNew({ navigation, route }: PsychologistDash
                     })}
                   </View>
                 ) : (
-                  <Text style={styles.emptyListText}>No assessments scheduled yet. Click "New Assessment" to schedule one.</Text>
+                  <Text style={styles.emptyListText}>{t('noAssessments')}</Text>
                 )}
               </CardContent>
             </Card>
@@ -1384,9 +1394,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   headerIcon: {
     fontSize: 20,
     marginRight: 8,
+  },
+  settingsIcon: {
+    fontSize: 20,
   },
   headerTitle: {
     fontSize: 20,

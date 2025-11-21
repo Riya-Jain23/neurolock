@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.native';
 import { Alert } from './ui/alert.native';
 import { Input } from './ui/input.native';
 import { Button } from './ui/button.native';
+import { useLanguage } from '../context/LanguageContext';
 import { patientAPI, therapyNoteAPI, assessmentAPI } from '../services/api';
 
 interface PsychiatristDashboardNewProps {
@@ -52,6 +53,8 @@ interface Report {
 
 export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDashboardNewProps) {
   const { staffId } = route.params || { staffId: 'STAFF-001' };
+  const { t, language } = useLanguage();
+  console.log('🏥 [PsychiatristDashboard] Loaded with language:', language);
   const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
@@ -397,14 +400,22 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerIcon}>🏥</Text>
-              <Text style={styles.headerTitle}>Psychiatrist Dashboard</Text>
+              <Text style={styles.headerTitle}>{t('psychiatristDashboard')}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('SettingsNew')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.settingsIcon}>⚙️</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.settingsIcon}>⚙️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('WelcomeNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.logoutIcon}>🚪</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Text style={styles.headerSubtitle}>Dr. {staffId}</Text>
         </View>
@@ -412,35 +423,35 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
         {/* Security Alert */}
         <Alert
           variant="default"
-          title="2 suspicious activity alert(s) require your attention"
+          title={`2 ${t('suspiciousActivityAlert')}`}
           style={styles.alertBanner}
         />
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="patients" style={styles.tabs}>
           <TabsList>
-            <TabsTrigger value="patients">Patients</TabsTrigger>
-            <TabsTrigger value="appointments">Appointments</TabsTrigger>
-            <TabsTrigger value="notes">Notes</TabsTrigger>
-            <TabsTrigger value="medications">Medications</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="patients">{t('patients')}</TabsTrigger>
+            <TabsTrigger value="appointments">{t('appointments')}</TabsTrigger>
+            <TabsTrigger value="notes">{t('clinicalNotesTab')}</TabsTrigger>
+            <TabsTrigger value="medications">{t('medications')}</TabsTrigger>
+            <TabsTrigger value="reports">{t('reports')}</TabsTrigger>
           </TabsList>
 
           {/* Patients Tab */}
           <TabsContent value="patients">
             <View style={styles.tabHeader}>
-              <Text style={styles.tabTitle}>Patient Records</Text>
+              <Text style={styles.tabTitle}>{t('patientRecords')}</Text>
               <TouchableOpacity
                 style={styles.addButton}
                 activeOpacity={0.7}
                 onPress={() => setNewPatientModalVisible(true)}
               >
-                <Text style={styles.addButtonText}>+ New Patient</Text>
+                <Text style={styles.addButtonText}>{t('newPatient')}</Text>
               </TouchableOpacity>
             </View>
 
             <Input
-              placeholder="Search patients..."
+              placeholder={t('searchPatients')}
               value={searchTerm}
               onChangeText={setSearchTerm}
               leftIcon="🔍"
@@ -449,7 +460,7 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
 
             <View style={styles.patientList}>
               {filteredPatients.length === 0 ? (
-                <Text style={styles.emptyText}>No patients found</Text>
+                <Text style={styles.emptyText}>{t('noPatients')}</Text>
               ) : (
                 filteredPatients.map((patient) => (
                   <TouchableOpacity
@@ -476,16 +487,16 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
                         <View style={styles.patientDetails}>
                           <View style={styles.patientDetailRow}>
                             <View style={styles.patientDetailItem}>
-                              <Text style={styles.detailLabel}>Diagnosis</Text>
+                              <Text style={styles.detailLabel}>{t('diagnosis')}</Text>
                               <Text style={styles.detailValue}>{patient.diagnosis}</Text>
                             </View>
                             <View style={styles.patientDetailItem}>
-                              <Text style={styles.detailLabel}>Last Visit</Text>
+                              <Text style={styles.detailLabel}>{t('lastVisit')}</Text>
                               <Text style={styles.detailValue}>{patient.lastVisit}</Text>
                             </View>
                           </View>
                           <View style={styles.patientDetailFull}>
-                            <Text style={styles.detailLabel}>Current Medication</Text>
+                            <Text style={styles.detailLabel}>{t('currentMedication')}</Text>
                             <Text style={styles.detailValue}>{patient.medication}</Text>
                           </View>
                         </View>
@@ -500,22 +511,22 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
           {/* Appointments Tab */}
           <TabsContent value="appointments">
             <View style={styles.tabHeader}>
-              <Text style={styles.tabTitle}>Appointments</Text>
+              <Text style={styles.tabTitle}>{t('appointments')}</Text>
               <TouchableOpacity
                 style={styles.addButton}
                 activeOpacity={0.7}
                 onPress={() => setNewAppointmentModalVisible(true)}
               >
-                <Text style={styles.addButtonText}>📅 Schedule</Text>
+                <Text style={styles.addButtonText}>{t('scheduleAppointment')}</Text>
               </TouchableOpacity>
             </View>
 
             <Card style={styles.notesCard}>
               <CardContent>
                 <Text style={styles.notesDescription}>
-                  View and manage upcoming and past appointments with patients.
+                  {t('appointments')} - View and manage upcoming and past appointments with patients.
                 </Text>
-                <Text style={styles.emptyText}>No appointments scheduled</Text>
+                <Text style={styles.emptyText}>{t('noAppointments')}</Text>
               </CardContent>
             </Card>
           </TabsContent>
@@ -523,13 +534,13 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
           {/* Notes Tab */}
           <TabsContent value="notes">
             <View style={styles.tabHeader}>
-              <Text style={styles.tabTitle}>Clinical Notes</Text>
+              <Text style={styles.tabTitle}>{t('clinicalNotesTitle')}</Text>
               <TouchableOpacity
                 style={styles.addButton}
                 activeOpacity={0.7}
                 onPress={() => setNewNoteModalVisible(true)}
               >
-                <Text style={styles.addButtonText}>📄 New Note</Text>
+                <Text style={styles.addButtonText}>{t('newNote')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -640,28 +651,28 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
                 <CardContent style={styles.statisticContent}>
                   <Text style={styles.statisticIcon}>👥</Text>
                   <Text style={styles.statisticValue}>{getPatientStatistics().totalPatients}</Text>
-                  <Text style={styles.statisticLabel}>Total Patients</Text>
+                  <Text style={styles.statisticLabel}>{t('totalPatients')}</Text>
                 </CardContent>
               </Card>
               <Card style={styles.statisticCard}>
                 <CardContent style={styles.statisticContent}>
                   <Text style={styles.statisticIcon}>📝</Text>
                   <Text style={styles.statisticValue}>{getPatientStatistics().totalNotes}</Text>
-                  <Text style={styles.statisticLabel}>Clinical Notes</Text>
+                  <Text style={styles.statisticLabel}>{t('clinicalNotes')}</Text>
                 </CardContent>
               </Card>
               <Card style={styles.statisticCard}>
                 <CardContent style={styles.statisticContent}>
                   <Text style={styles.statisticIcon}>💊</Text>
                   <Text style={styles.statisticValue}>{getPatientStatistics().activeMedications}</Text>
-                  <Text style={styles.statisticLabel}>Active Meds</Text>
+                  <Text style={styles.statisticLabel}>{t('activeMeds')}</Text>
                 </CardContent>
               </Card>
               <Card style={styles.statisticCard}>
                 <CardContent style={styles.statisticContent}>
                   <Text style={styles.statisticIcon}>📊</Text>
                   <Text style={styles.statisticValue}>{getPatientStatistics().totalReports}</Text>
-                  <Text style={styles.statisticLabel}>Reports</Text>
+                  <Text style={styles.statisticLabel}>{t('reports')}</Text>
                 </CardContent>
               </Card>
             </View>
@@ -669,12 +680,12 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
             <Card style={styles.notesCard}>
               <CardContent>
                 <Text style={styles.notesDescription}>
-                  Clinical summaries, diagnosis reports, and treatment progress documentation.
+                  {t('clinicalSummaries')}
                 </Text>
 
                 <View style={styles.reportsList}>
                   {reports.length === 0 ? (
-                    <Text style={styles.emptyText}>No reports generated yet</Text>
+                    <Text style={styles.emptyText}>{t('noReportsYet')}</Text>
                   ) : (
                     reports.map((report) => (
                       <View key={report.id} style={styles.reportItem}>
@@ -709,35 +720,35 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Patient</Text>
+            <Text style={styles.modalTitle}>{t('addNewPatient')}</Text>
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Patient Name *"
+              placeholder={t('patientNamePlaceholder')}
               value={newPatientName}
               onChangeText={setNewPatientName}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="Date of Birth (YYYY-MM-DD) *"
+              placeholder={t('dateOfBirthPlaceholder')}
               value={newPatientDOB}
               onChangeText={setNewPatientDOB}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="Gender (M/F/Other) *"
+              placeholder={t('genderPlaceholder')}
               value={newPatientGender}
               onChangeText={setNewPatientGender}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="Contact Number"
+              placeholder={t('contactNumberPlaceholder')}
               value={newPatientContact}
               onChangeText={setNewPatientContact}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="Diagnosis"
+              placeholder={t('diagnosisPlaceholder')}
               value={newPatientDiagnosis}
               onChangeText={setNewPatientDiagnosis}
             />
@@ -747,7 +758,7 @@ export function PsychiatristDashboardNew({ navigation, route }: PsychiatristDash
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setNewPatientModalVisible(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.saveButton]}
@@ -1204,6 +1215,9 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   settingsIcon: {
+    fontSize: 20,
+  },
+  logoutIcon: {
     fontSize: 20,
   },
   headerSubtitle: {

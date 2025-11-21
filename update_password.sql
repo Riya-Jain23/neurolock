@@ -1,0 +1,1 @@
+UPDATE staff SET password_hash='$2b$10$GFL7rGYF6sKnRLUqQ0cheOtdWZs5dqDXOpD0HNIJimPzTY3i0DHYG';

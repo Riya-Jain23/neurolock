@@ -44,23 +44,32 @@ export const register = async (userData: RegisterData): Promise<Omit<Staff, 'pas
 };
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
+    console.log(`[SERVICE] Login service called - Email: ${email}`);
     const staff = await getStaffByEmail(email);
     
     if (!staff) {
+        console.log(`[SERVICE] Staff not found for email: ${email}`);
         throw new Error('Invalid credentials');
     }
+
+    console.log(`[SERVICE] Staff found - ID: ${staff.id}, Email: ${staff.email}, Hash exists: ${!!staff.password_hash}`);
 
     if (staff.status === 'locked') {
         throw new Error('Account is locked. Please contact administrator.');
     }
 
     const isValid = await comparePasswords(password, staff.password_hash);
+    console.log(`[SERVICE] Password comparison result: ${isValid}`);
     if (!isValid) {
         throw new Error('Invalid credentials');
     }
 
     // Update last login time
-    await updateStaffLastLogin(staff.id!);
+    try {
+        await updateStaffLastLogin(staff.id!);
+    } catch (error) {
+        // Silently fail on last login update
+    }
 
     // Generate JWT token
     const token = jwt.sign(

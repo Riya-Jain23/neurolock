@@ -19,6 +19,7 @@ import { Alert } from './ui/alert.native';
 import { Input } from './ui/input.native';
 import { Button } from './ui/button.native';
 import { Menu } from 'react-native-paper';
+import { useLanguage } from '../context/LanguageContext';
 import { staffAPI, authAPI, getUser } from '../services/api';
 
 interface AdminDashboardNewProps {
@@ -53,6 +54,7 @@ interface SecurityAlert {
 
 export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps) {
   const { staffId } = route.params || { staffId: 'ADMIN-001' };
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleMenus, setVisibleMenus] = useState<{ [key: string]: boolean }>({});
   const [loading, setLoading] = useState(true);
@@ -377,14 +379,22 @@ export function AdminDashboardNew({ navigation, route }: AdminDashboardNewProps)
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerIcon}>🔐</Text>
-              <Text style={styles.headerTitle}>Admin Dashboard</Text>
+              <Text style={styles.headerTitle}>{t('adminDashboard')}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('WelcomeNew')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.logoutIcon}>🚪</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.settingsIcon}>⚙️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('WelcomeNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.logoutIcon}>🚪</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Text style={styles.headerSubtitle}>{staffId}</Text>
         </View>
@@ -851,9 +861,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   headerIcon: {
     fontSize: 20,
     marginRight: 8,
+  },
+  settingsIcon: {
+    fontSize: 20,
   },
   headerTitle: {
     fontSize: 20,

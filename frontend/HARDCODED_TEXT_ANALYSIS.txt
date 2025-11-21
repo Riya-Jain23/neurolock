@@ -1,0 +1,345 @@
+HARDCODED ENGLISH TEXT ANALYSIS - ALL 5 DASHBOARDS
+================================================
+
+Generated for translation: PsychiatristDashboardNew, PsychologistDashboardNew, TherapistDashboardNew, NurseDashboardNew, AdminDashboardNew
+
+PSYCHIATRIST DASHBOARD
+======================
+Tab Titles:
+- Line 380: "Prescriptions"
+- Line 382: "Reports"
+
+Modal Titles:
+- Line 386: "Create Clinical Note"
+- Line 389: "Schedule Appointment"
+- Line 393: "Prescribe Medication"
+- Line 394: "Generate Report"
+- Line 401: "Clinical Note"
+
+Modal Labels:
+- Line 383: "Medication Name *"
+- Line 387: "Select Patient *"
+- Line 395: "Report Type *"
+
+Placeholders:
+- Line 384: "Dosage (e.g., 50mg) *"
+- Line 385: "Frequency (e.g., Twice daily) *"
+- Line 388: "Clinical Note *"
+- Line 390: "Date (YYYY-MM-DD) *"
+- Line 391: "Time (HH:MM) *"
+- Line 392: "Reason for Appointment"
+
+Button Labels:
+- Line 400: "Generating..."
+- Line 409: "Close"
+
+Empty States:
+- Line 379: "No notes recorded yet. Add a note from a patient's session."
+- Line 381: "No active prescriptions"
+- Line 407: "(No content)"
+
+Other Text:
+- Line 378: "Access to clinical assessment notes, treatment plans, and patient observations." [description]
+- Line 402: "Decrypting note..." [loading_message]
+- Line 403: "Patient:" [label]
+- Line 404: "Author:" [label]
+- Line 405: "Created:" [label]
+- Line 406: "Note content" [section_header]
+- Line 408: "No note selected or failed to load." [error_message]
+
+Report Options:
+- "clinical-summary"
+- "diagnosis-report"
+- "treatment-progress"
+- "medication-review"
+
+
+PSYCHOLOGIST DASHBOARD
+======================
+Tab Titles:
+- Line 559: "Therapy Notes"
+
+Modal Titles:
+- Line 582: "Add New Patient"
+- Line 614: "Edit Patient"
+- Line 619: "Schedule Assessment"
+- Line 626: "Authentication Required"
+
+Section Headers:
+- Line 555: "Condition"
+- Line 556: "Last Session"
+- Line 557: "Recent Assessment"
+- Line 568: "Available Assessment Tools"
+- Line 583: "Basic Information"
+- Line 592: "Contact Information"
+- Line 597: "Medical Information"
+
+Field Labels:
+- Line 584: "Full Name *"
+- Line 586: "Date of Birth *"
+- Line 588: "Gender *"
+- Line 593: "Phone Number (10 digits)"
+- Line 595: "Email Address"
+- Line 598: "Primary Diagnosis"
+- Line 600: "Ward"
+- Line 602: "Room Number"
+- Line 604: "Attending Physician"
+- Line 606: "Assigned Therapist"
+- Line 620: "Assessment Type *"
+- Line 621: "Select Patient *"
+- Line 622: "Scheduled Date *"
+- Line 624: "Assessment Notes"
+
+Placeholders:
+- Line 585: "Enter patient's full name"
+- Line 587: "YYYY-MM-DD"
+- Line 594: "e.g. 1234567890"
+- Line 596: "e.g. patient@gmail.com"
+- Line 599: "e.g. Major Depressive Disorder"
+- Line 601: "e.g. Psychiatric Ward A"
+- Line 603: "e.g. 205"
+- Line 605: "e.g. Dr. Smith"
+- Line 607: "Leave blank to auto-assign to you"
+- Line 625: "Enter notes (optional)"
+- Line 628: "Enter your password"
+
+Button Labels:
+- Line 560: "New Note"
+- Line 612: "Cancel"
+- Line 613: "Add Patient"
+- Line 618: "Update Patient"
+- Line 629: "Verify & View"
+- Line 630: "Try Biometric Again"
+
+Options:
+- Line 589: "Male"
+- Line 590: "Female"
+- Line 591: "Other"
+
+Assessment Tools (Educational Content):
+- Line 570: "Beck Depression Inventory" 
+  "A 21-question multiple-choice self-report inventory for measuring the severity of depression. Widely used for both clinical and research purposes."
+- Line 572: "GAD-7"
+  "Generalized Anxiety Disorder 7-item scale. A brief clinical measure for assessing generalized anxiety disorder severity."
+- Line 574: "MMPI-2"
+  "Minnesota Multiphasic Personality Inventory-2. A standardized psychometric test of adult personality and psychopathology with 567 true/false questions."
+- Line 576: "Rorschach Test"
+  "A projective psychological test consisting of 10 inkblot images. Used to examine personality characteristics and emotional functioning."
+- Line 578: "WAIS-IV"
+  "Wechsler Adult Intelligence Scale, Fourth Edition. An IQ test designed to measure intelligence and cognitive ability in adults and older adolescents."
+- Line 580: "PCL-5"
+  "PTSD Checklist for DSM-5. A 20-item self-report measure assessing the 20 DSM-5 symptoms of PTSD."
+
+Info Text:
+- Line 608: "Patient ID will be auto-generated (PAT-XXXXX format). Status will be set to Active and admission date to today."
+- Line 609: "Email must include @ symbol"
+- Line 610: "Phone number must be exactly 10 digits"
+- Line 611: "Date format: YYYY-MM-DD"
+- Line 615: "Update patient information and status"
+- Line 616: "Email must include @ symbol"
+- Line 617: "Phone number must be exactly 10 digits"
+
+Other:
+- Line 558: "Prescription information restricted" [restricted_notice]
+- Line 561: "Access to therapy session notes, treatment plans, and psychological observations." [description]
+- Line 562: "No therapy notes yet" [empty_state]
+- Line 563: "By:" [label]
+- Line 564: "Unknown Patient" [placeholder]
+- Line 565: "Unknown" [placeholder]
+- Line 566: "No content" [placeholder]
+- Line 567: "Encrypted" [badge_text]
+- Line 569: "Click on any assessment tool below to learn more about it" [description]
+- Line 623: "Select Date" [button_text]
+- Line 627: "Enter your password to view this encrypted therapy note" [description]
+
+
+THERAPIST DASHBOARD
+===================
+Section Headers:
+- Line 159: "Client List"
+- Line 166: "Session Logs"
+- Line 170: "Notes"
+- Line 171: "Progress Tracking"
+- Line 175: "Client Progress Overview"
+- Line 177: "Access Level: Therapist"
+
+Button Labels:
+- Line 160: "New Client"
+- Line 167: "New Log"
+
+Alert/Notice:
+- Line 177: "Access Level: Therapist" [alert_title]
+- Line 178: "Limited to therapy session logs and progress tracking only." [alert_description]
+
+Labels:
+- Line 162: "Sessions:"
+- Line 163: "Last Session:"
+- Line 164: "Next Session:"
+- Line 165: "Progress"
+- Line 168: "Date"
+- Line 169: "Duration"
+- Line 176: "sessions completed"
+- Line 172: "Active Clients"
+- Line 173: "Total Sessions"
+- Line 174: "Avg Progress"
+
+Placeholders:
+- Line 161: "Search clients..."
+
+
+NURSE DASHBOARD
+===============
+Alert Titles:
+- Line 207: "High Priority Alerts"
+- Line 209: "Access Level: Nurse"
+
+Alert Descriptions:
+- Line 208: "urgent items require attention"
+- Line 210: "Limited to medication schedules and basic patient information. No therapy notes access."
+
+Section Headers:
+- Line 211: "Patient List"
+- Line 218: "Medication Schedule"
+- Line 225: "Patient Alerts"
+
+Labels:
+- Line 214: "Heart Rate"
+- Line 216: "Blood Pressure"
+- Line 217: "Last checked:"
+- Line 222: "Patient:"
+- Line 223: "Dosage:"
+- Line 224: "Time:"
+
+Badge Text:
+- Line 213: "Room"
+
+Stats Labels:
+- Line 219: "Administered"
+- Line 220: "Pending"
+- Line 221: "Scheduled"
+- Line 226: "High Priority"
+- Line 227: "Medium"
+- Line 228: "Low Priority"
+
+Alert Messages:
+- Line 229: "Medication refill needed"
+- Line 230: "Scheduled vitals check"
+- Line 231: "Review lab results"
+
+Units:
+- Line 215: "bpm"
+
+Placeholders:
+- Line 212: "Search patients..."
+
+
+ADMIN DASHBOARD
+===============
+Tab Titles:
+- Line 250: "Staff"
+- Line 251: "Roles"
+- Line 252: "Audit"
+- Line 253: "Security"
+
+Alert Title:
+- Line 248: "Critical Security Alerts"
+
+Alert Description:
+- Line 249: "critical security issues detected"
+
+Section Headers:
+- Line 254: "Staff Accounts"
+- Line 261: "Role Permissions Matrix"
+- Line 269: "Manage Admin Access"
+- Line 274: "System Audit Logs"
+- Line 276: "Security Reports"
+- Line 281: "System Health"
+
+Button Labels:
+- Line 255: "Add Staff"
+- Line 259: "Edit"
+- Line 260: "View"
+- Line 272: "Make Admin"
+- Line 273: "Admin"
+- Line 275: "Export"
+- Line 297: "Save Changes"
+- Line 302: "Verify & Continue"
+
+Modal Titles:
+- Line 289: "Edit Staff Member"
+- Line 298: "Admin Verification Required"
+
+Modal Labels:
+- Line 290: "Name"
+- Line 292: "Email"
+- Line 294: "Status"
+- Line 300: "Enter Your Password"
+
+Placeholders:
+- Line 256: "Search staff..."
+- Line 291: "Enter name"
+- Line 293: "Enter email"
+- Line 301: "Password"
+
+Loading Messages:
+- Line 257: "Loading staff members..."
+
+Labels:
+- Line 258: "Last active:"
+- Line 280: "IP:"
+- Line 282: "Active Sessions"
+- Line 283: "Database Status"
+- Line 285: "Last Backup"
+- Line 287: "Encryption"
+
+Options:
+- Line 262: "Role"
+- Line 295: "Active"
+- Line 296: "Inactive"
+
+Permissions:
+- Line 263: "View Records"
+- Line 264: "Edit Records"
+- Line 265: "Prescribe"
+- Line 266: "View Therapy Notes"
+- Line 267: "Admin Access"
+- Line 268: "Manage Staff"
+
+Stats Labels:
+- Line 277: "Failed Logins"
+- Line 278: "Blocked IPs"
+- Line 279: "MFA Bypass"
+
+Status Values:
+- Line 284: "Healthy"
+- Line 286: "2 hours ago"
+- Line 288: "Active"
+
+Button Text:
+- Line 271: "Can't modify self"
+
+Descriptions:
+- Line 270: "Grant or revoke admin privileges"
+- Line 299: "Changing admin roles requires password verification for security."
+
+SUMMARY
+=======
+Total hardcoded strings: 299
+Files analyzed: 5
+
+Priority Areas for Translation:
+1. User-facing alerts and modals (HIGH PRIORITY)
+2. Button labels and actions (HIGH PRIORITY)
+3. Form labels and field descriptors (MEDIUM PRIORITY)
+4. Help text and descriptions (MEDIUM PRIORITY)
+5. Alert messages and notifications (HIGH PRIORITY)
+6. Assessment tool descriptions (MEDIUM PRIORITY)
+7. Tab titles and section headers (MEDIUM PRIORITY)
+8. Placeholders and examples (LOW PRIORITY)
+9. Permission labels (LOW PRIORITY)
+10. Status indicators (LOW PRIORITY)
+
+Recommendation:
+All strings should be wrapped with t() function from useLanguage hook. Audit already translated items 
+to identify the naming convention used in your translation keys, then systematically apply t() wrappers
+starting with the highest priority items.

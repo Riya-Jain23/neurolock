@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middlewares/auth.middleware';
-import { pool } from '../db/mysql'; // same pool used in other repos
+import pool from '../infra/db/mysql-client'; // same pool used in other repos
 
 const router = Router();
 

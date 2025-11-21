@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { LanguageProvider } from './context/LanguageContext';
 
 import { WelcomeScreenNew } from "./components/WelcomeScreenNew";
 import { LoginScreenNew } from "./components/LoginScreenNew";
@@ -62,11 +63,12 @@ const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-  <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <PaperProvider>
-          <ToastProvider>
-            <NavigationContainer>
+    <LanguageProvider>
+      <SafeAreaProvider>
+    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+          <PaperProvider>
+            <ToastProvider>
+              <NavigationContainer>
               <StatusBar style="auto" />
               <Stack.Navigator 
                 initialRouteName="WelcomeNew"
@@ -115,5 +117,6 @@ export default function App() {
         </PaperProvider>
       </SafeAreaView>
     </SafeAreaProvider>
+    </LanguageProvider>
   );
 }

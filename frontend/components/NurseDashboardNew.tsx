@@ -6,12 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Modal,
+  Alert as RNAlert,
 } from 'react-native';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card.native';
 import { Badge } from './ui/badge.native';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.native';
 import { Alert } from './ui/alert.native';
 import { Input } from './ui/input.native';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NurseDashboardNewProps {
   navigation: any;
@@ -46,36 +49,13 @@ interface AlertItem {
 
 export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps) {
   const { staffId } = route.params || { staffId: 'STAFF-004' };
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
+  const [medicationModalVisible, setMedicationModalVisible] = useState(false);
 
-  const patients: Patient[] = [
-    {
-      id: 'P001',
-      name: 'Patient A',
-      room: '101',
-      heartRate: 72,
-      bloodPressure: '120/80',
-      lastChecked: '10:30 AM',
-    },
-    {
-      id: 'P002',
-      name: 'Patient B',
-      room: '102',
-      heartRate: 68,
-      bloodPressure: '118/76',
-      lastChecked: '11:00 AM',
-    },
-    {
-      id: 'P003',
-      name: 'Patient C',
-      room: '103',
-      heartRate: 75,
-      bloodPressure: '122/82',
-      lastChecked: '9:45 AM',
-    },
-  ];
-
-  const medications: Medication[] = [
+  // Initialize medications as state so we can update them
+  const [medications, setMedications] = useState<Medication[]>([
     {
       id: 'M001',
       patient: 'Patient A',
@@ -107,6 +87,33 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
       dosage: '1000 IU',
       time: '08:00 PM',
       status: 'Scheduled',
+    },
+  ]);;
+
+  const patients: Patient[] = [
+    {
+      id: 'P001',
+      name: 'Patient A',
+      room: '101',
+      heartRate: 72,
+      bloodPressure: '120/80',
+      lastChecked: '10:30 AM',
+    },
+    {
+      id: 'P002',
+      name: 'Patient B',
+      room: '102',
+      heartRate: 68,
+      bloodPressure: '118/76',
+      lastChecked: '11:00 AM',
+    },
+    {
+      id: 'P003',
+      name: 'Patient C',
+      room: '103',
+      heartRate: 75,
+      bloodPressure: '122/82',
+      lastChecked: '9:45 AM',
     },
   ];
 
@@ -172,6 +179,26 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
 
   const highPriorityAlerts = alerts.filter((a) => a.priority === 'High');
 
+  const handleMedicationUpdate = (medication: Medication, newStatus: string) => {
+    // Update the medication in the medications array
+    const updatedMeds = medications.map(med => 
+      med.id === medication.id ? { ...med, status: newStatus } : med
+    );
+    setMedications(updatedMeds);
+    
+    // Show success message
+    RNAlert.alert(
+      t('confirmed'),
+      `${medication.medication} ${t('administratedSuccessfully')}`,
+      [{ text: 'OK', onPress: () => setMedicationModalVisible(false) }]
+    );
+  };
+
+  const openMedicationModal = (medication: Medication) => {
+    setSelectedMedication(medication);
+    setMedicationModalVisible(true);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -180,14 +207,22 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerIcon}>🏥</Text>
-              <Text style={styles.headerTitle}>Nurse Dashboard</Text>
+              <Text style={styles.headerTitle}>{t('nurseDashboard')}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('WelcomeNew')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.logoutIcon}>🚪</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.settingsIcon}>⚙️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('WelcomeNew')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.logoutIcon}>🚪</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Text style={styles.headerSubtitle}>{staffId}</Text>
         </View>
@@ -196,7 +231,7 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
         {highPriorityAlerts.length > 0 && (
           <Alert
             variant="destructive"
-            title="⚠️ High Priority Alerts"
+            title={t('highPriorityAlerts')}
             description={`${highPriorityAlerts.length} urgent items require attention`}
             style={styles.highPriorityAlert}
           />
@@ -205,8 +240,8 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
         {/* Access Restrictions Notice */}
         <Alert
           variant="default"
-          title="Access Level: Nurse"
-          description="Limited to medication schedules and basic patient information. No therapy notes access."
+                    title={`${t('accessLevel')}: Nurse`}
+          description={t('limitedToMedications')}
           style={styles.accessAlert}
         />
 
@@ -214,13 +249,13 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
         <Tabs defaultValue="patients" style={styles.tabs}>
           <TabsList>
             <TabsTrigger value="patients">
-              <Text>Patients</Text>
+              <Text>{t('patients')}</Text>
             </TabsTrigger>
             <TabsTrigger value="medications">
-              <Text>Medications</Text>
+              <Text>{t('medications')}</Text>
             </TabsTrigger>
             <TabsTrigger value="alerts">
-              <Text>Alerts</Text>
+              <Text>{t('notifications')}</Text>
             </TabsTrigger>
           </TabsList>
 
@@ -328,6 +363,18 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
                           <Text style={styles.medicationDetailValue}>{med.time}</Text>
                         </View>
                       </View>
+                      
+                      {med.status !== 'Administered' && (
+                        <View style={styles.medicationActions}>
+                          <TouchableOpacity
+                            style={styles.updateButton}
+                            onPress={() => openMedicationModal(med)}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={styles.updateButtonText}>{t('markAsAdministered')}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </CardContent>
                   </Card>
                 </TouchableOpacity>
@@ -403,6 +450,73 @@ export function NurseDashboardNew({ navigation, route }: NurseDashboardNewProps)
           </TabsContent>
         </Tabs>
       </ScrollView>
+
+      {/* Medication Update Modal */}
+      <Modal
+        visible={medicationModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setMedicationModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('updateMedicationStatus')}</Text>
+              <TouchableOpacity
+                onPress={() => setMedicationModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {selectedMedication && (
+              <View style={styles.medicationUpdateContent}>
+                <View style={styles.updateField}>
+                  <Text style={styles.updateLabel}>{t('medicationName')}:</Text>
+                  <Text style={styles.updateValue}>{selectedMedication.medication}</Text>
+                </View>
+
+                <View style={styles.updateField}>
+                  <Text style={styles.updateLabel}>{t('patientNameLabel')}:</Text>
+                  <Text style={styles.updateValue}>{selectedMedication.patient}</Text>
+                </View>
+
+                <View style={styles.updateField}>
+                  <Text style={styles.updateLabel}>Dosage:</Text>
+                  <Text style={styles.updateValue}>{selectedMedication.dosage}</Text>
+                </View>
+
+                <View style={styles.updateField}>
+                  <Text style={styles.updateLabel}>{t('timeLabel')}:</Text>
+                  <Text style={styles.updateValue}>{selectedMedication.time}</Text>
+                </View>
+
+                <View style={styles.updateField}>
+                  <Text style={styles.updateLabel}>{t('status')}:</Text>
+                  <Text style={styles.updateValue}>{selectedMedication.status}</Text>
+                </View>
+
+                <View style={styles.buttonGroup}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.administeredButton]}
+                    onPress={() => handleMedicationUpdate(selectedMedication, 'Administered')}
+                  >
+                    <Text style={styles.administeredButtonText}>{t('markAsAdministered')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelModalButton]}
+                    onPress={() => setMedicationModalVisible(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -430,9 +544,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   headerIcon: {
     fontSize: 20,
     marginRight: 8,
+  },
+  settingsIcon: {
+    fontSize: 20,
   },
   headerTitle: {
     fontSize: 20,
@@ -608,5 +730,109 @@ const styles = StyleSheet.create({
   alertTime: {
     fontSize: 12,
     color: '#6b7280',
+  },
+  // Medication Update Styles
+  medicationActions: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  updateButton: {
+    backgroundColor: '#3b82f6',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  updateButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  modalCloseButton: {
+    padding: 8,
+  },
+  modalCloseText: {
+    fontSize: 24,
+    color: '#6b7280',
+  },
+  medicationUpdateContent: {
+    marginBottom: 20,
+  },
+  updateField: {
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  updateLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  updateValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1f2937',
+  },
+  buttonGroup: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  modalButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  administeredButton: {
+    backgroundColor: '#10b981',
+  },
+  administeredButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cancelModalButton: {
+    backgroundColor: '#e5e7eb',
+  },
+  cancelButtonText: {
+    color: '#1f2937',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

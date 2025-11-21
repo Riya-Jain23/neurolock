@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,15 @@ import {
   SafeAreaView,
   Switch,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card.native';
 import { Badge } from './ui/badge.native';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.native';
 import { Button } from './ui/button.native';
 import { Menu } from 'react-native-paper';
 import { useToast } from './ui';
+import { useLanguage } from '../context/LanguageContext';
+import { getTranslation } from '../utils/i18n';
 
 interface SettingsScreenNewProps {
   navigation: any;
@@ -32,6 +35,14 @@ interface ConnectedDevice {
 export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps) {
   const { staffId, userRole } = route.params || { staffId: 'STAFF-001', userRole: 'psychiatrist' };
   const { showToast } = useToast();
+  const { language, setLanguage, t } = useLanguage();
+  const [isSaving, setIsSaving] = useState(false);
+  
+  console.log('🔧 SettingsScreenNew LOADED with staffId:', staffId);
+  console.log('🔧 route.params:', route.params);
+  console.log('🔧 Current global language:', language);
+  console.log('🔧 AsyncStorage type:', typeof AsyncStorage);
+  console.log('🔧 AsyncStorage available:', !!AsyncStorage);
 
   // MFA Settings
   const [preferredMFAVisible, setPreferredMFAVisible] = useState(false);
@@ -46,7 +57,6 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
 
   // Localization Settings
   const [languageVisible, setLanguageVisible] = useState(false);
-  const [language, setLanguage] = useState('en');
   const [timezoneVisible, setTimezoneVisible] = useState(false);
   const [timezone, setTimezone] = useState('America/New_York');
   const [dateFormatVisible, setDateFormatVisible] = useState(false);
@@ -57,6 +67,59 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
   const [autoLockTimeout, setAutoLockTimeout] = useState('15');
   const [deviceTrust, setDeviceTrust] = useState(true);
   const [loginAlerts, setLoginAlerts] = useState(true);
+
+  // Load settings from AsyncStorage on component mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    console.log('⚙️ loadSettings called for staffId:', staffId);
+    console.log('🔍 About to call AsyncStorage.getItem...');
+    console.log('🔍 Key will be:', `user_settings_${staffId}`);
+    try {
+      console.log('🔍 Calling AsyncStorage.getItem now...');
+      const key = `user_settings_${staffId}`;
+      console.log('🔍 Key:', key);
+      console.log('🔍 About to await...');
+      const savedSettings = await AsyncStorage.getItem(key);
+      console.log('📦 AsyncStorage.getItem completed, result:', savedSettings ? `Found (${savedSettings.length} chars)` : 'NOT FOUND');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        console.log('✅ Settings parsed:', settings);
+        // Load MFA settings
+        if (settings.preferredMFA) setPreferredMFA(settings.preferredMFA);
+        if (settings.backupMFAEnabled !== undefined) setBackupMFAEnabled(settings.backupMFAEnabled);
+        if (settings.biometricEnabled !== undefined) setBiometricEnabled(settings.biometricEnabled);
+        
+        // Load notification settings
+        if (settings.emailNotifications !== undefined) setEmailNotifications(settings.emailNotifications);
+        if (settings.securityAlerts !== undefined) setSecurityAlerts(settings.securityAlerts);
+        if (settings.sessionReminders !== undefined) setSessionReminders(settings.sessionReminders);
+        
+        // Load localization settings
+        console.log('📝 Loaded language:', settings.language);
+        if (settings.language) setLanguage(settings.language);
+        console.log('📝 Loaded timezone:', settings.timezone);
+        if (settings.timezone) setTimezone(settings.timezone);
+        console.log('📝 Loaded dateFormat:', settings.dateFormat);
+        if (settings.dateFormat) setDateFormat(settings.dateFormat);
+        
+        // Load security settings
+        if (settings.autoLockTimeout) setAutoLockTimeout(settings.autoLockTimeout);
+        if (settings.deviceTrust !== undefined) setDeviceTrust(settings.deviceTrust);
+        if (settings.loginAlerts !== undefined) setLoginAlerts(settings.loginAlerts);
+        console.log('✅ ALL SETTINGS LOADED!');
+      }
+    } catch (error) {
+      console.error('❌ ERROR in loadSettings:', error);
+      console.error('❌ Error type:', typeof error);
+      if (error instanceof Error) {
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error stack:', error.stack);
+      }
+    }
+  };
 
   const connectedDevices: ConnectedDevice[] = [
     {
@@ -85,8 +148,51 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
     },
   ];
 
-  const handleSaveSettings = () => {
-    showToast('Settings saved successfully');
+  const handleSaveSettings = async () => {
+    if (isSaving) return;
+    console.log('💾 handleSaveSettings called, attempting to save...');
+    
+    try {
+      setIsSaving(true);
+      
+      const settingsData = {
+        // MFA settings
+        preferredMFA,
+        backupMFAEnabled,
+        biometricEnabled,
+        
+        // Notification settings
+        emailNotifications,
+        securityAlerts,
+        sessionReminders,
+        
+        // Localization settings
+        language,
+        timezone,
+        dateFormat,
+        
+        // Security settings
+        autoLockTimeout,
+        deviceTrust,
+        loginAlerts,
+        
+        // Metadata
+        lastUpdated: new Date().toISOString(),
+        staffId,
+        userRole,
+      };
+      
+      // Save to AsyncStorage
+      await AsyncStorage.setItem(`user_settings_${staffId}`, JSON.stringify(settingsData));
+      console.log('✅ Settings saved to AsyncStorage successfully!');
+      
+      showToast(t('saved'));
+      setIsSaving(false);
+    } catch (error) {
+      console.error('❌ ERROR in handleSaveSettings:', error);
+      showToast(t('error'));
+      setIsSaving(false);
+    }
   };
 
   const getDeviceIcon = (type: string) => {
@@ -116,7 +222,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
               >
                 <Text style={styles.backIcon}>←</Text>
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>Settings</Text>
+              <Text style={styles.headerTitle}>{t('settings')}</Text>
             </View>
           </View>
           <View style={styles.headerBottom}>
@@ -124,7 +230,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
               {userRole.charAt(0).toUpperCase() + userRole.slice(1)} • {staffId}
             </Text>
             <Badge variant="outline">
-              <Text style={styles.badgeText}>⚙️ Preferences</Text>
+              <Text style={styles.badgeText}>⚙️ {t('preferencesLabel')}</Text>
             </Badge>
           </View>
         </View>
@@ -133,16 +239,16 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
         <Tabs defaultValue="security" style={styles.tabs}>
           <TabsList>
             <TabsTrigger value="security">
-              <Text>Security</Text>
+              <Text>{t('security')}</Text>
             </TabsTrigger>
             <TabsTrigger value="devices">
-              <Text>Devices</Text>
+              <Text>{t('devices')}</Text>
             </TabsTrigger>
             <TabsTrigger value="notifications">
-              <Text>Alerts</Text>
+              <Text>{t('notifications')}</Text>
             </TabsTrigger>
             <TabsTrigger value="preferences">
-              <Text>General</Text>
+              <Text>{t('preferences')}</Text>
             </TabsTrigger>
           </TabsList>
 
@@ -463,7 +569,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
               </CardHeader>
               <CardContent>
                 <View style={styles.settingItem}>
-                  <Text style={styles.settingLabel}>Language</Text>
+                  <Text style={styles.settingLabel}>{t('language')}</Text>
                   <Menu
                     visible={languageVisible}
                     onDismiss={() => setLanguageVisible(false)}
@@ -480,6 +586,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
                   >
                     <Menu.Item
                       onPress={() => {
+                        console.log('📝 [SettingsScreen] User selected English');
                         setLanguage('en');
                         setLanguageVisible(false);
                       }}
@@ -487,6 +594,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
                     />
                     <Menu.Item
                       onPress={() => {
+                        console.log('📝 [SettingsScreen] User selected Español');
                         setLanguage('es');
                         setLanguageVisible(false);
                       }}
@@ -494,6 +602,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
                     />
                     <Menu.Item
                       onPress={() => {
+                        console.log('📝 [SettingsScreen] User selected Français');
                         setLanguage('fr');
                         setLanguageVisible(false);
                       }}
@@ -503,7 +612,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
                 </View>
 
                 <View style={styles.settingItem}>
-                  <Text style={styles.settingLabel}>Timezone</Text>
+                  <Text style={styles.settingLabel}>{t('timezone')}</Text>
                   <Menu
                     visible={timezoneVisible}
                     onDismiss={() => setTimezoneVisible(false)}
@@ -536,7 +645,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
                 </View>
 
                 <View style={styles.settingItem}>
-                  <Text style={styles.settingLabel}>Date Format</Text>
+                  <Text style={styles.settingLabel}>{t('dateFormat')}</Text>
                   <Menu
                     visible={dateFormatVisible}
                     onDismiss={() => setDateFormatVisible(false)}
@@ -610,7 +719,7 @@ export function SettingsScreenNew({ navigation, route }: SettingsScreenNewProps)
         {/* Save Button */}
         <View style={styles.saveButtonContainer}>
           <Button onPress={handleSaveSettings} variant="default" style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>💾 Save Settings</Text>
+            <Text style={styles.saveButtonText}>💾 {t('save')}</Text>
           </Button>
         </View>
       </ScrollView>

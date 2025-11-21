@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        console.log(`[LOGIN] Attempting login for: ${email}`);
+        console.log(`[LOGIN] Received credentials - Email: ${email}, Password length: ${password?.length}, Password: ${password}`);
         const result = await login(email, password);
         console.log(`[LOGIN] Success for: ${email}`);
 
